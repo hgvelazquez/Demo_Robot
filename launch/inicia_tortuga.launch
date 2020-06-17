@@ -1,5 +1,5 @@
 <launch>
-	<arg name="urdf_file" default="$(find xacro)/xacro.py '$(find robot_arm_simulator)/urdf/kobuki_standalone.urdf.xacro'" />
+	<arg name="urdf_file" default="$(find xacro)/xacro.py '$(find hola_tortuga)/urdf/kobuki_standalone.urdf.xacro'" />
   <arg name="robot_name" default="" />
 
   <param name="robot_description" command="$(arg urdf_file)" />
@@ -25,7 +25,7 @@
     <param name="~tf_prefix" value="$(arg robot_name)"/>
   </node>
 
-	<arg name="rvizconfig" default="$(find robot_arm_simulator)/rviz/urdf.rviz" />
+	<arg name="rvizconfig" default="$(find hola_tortuga)/rviz/urdf.rviz" />
 
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
 

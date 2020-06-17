@@ -24,7 +24,7 @@ JOINT_NAMES = []
 def jointStatesCallback(msg):
     print(len(msg.name))
     print(len(msg.position))
-    if (len(msg.name) == 7):
+    if (len(msg.name) > 3):
         global JOINT_NAMES
         JOINT_NAMES = msg.name
         print
@@ -70,10 +70,10 @@ def jointStatePublisher():
     while j < 2:
         robot_arm_joint_state.header.stamp = rospy.Time.now()
         new = []
-        print
-        if len(JOINT_POSITIONS) == 7 :
+        print(JOINT_NAMES)
+        if len(JOINT_POSITIONS) > 3 :
             for i in range(len(JOINT_POSITIONS)):
-                if i >= 2:
+                if i >= 2 :
                     new.append(JOINT_POSITIONS[i] + .01)
                 else:
                     new.append(JOINT_POSITIONS[i])
@@ -91,22 +91,22 @@ def jointStatePublisher():
             # print
             rate.sleep()
 
-    vel = [0,0,0,0,0,0,0]
-    vel[2] = 0.5
-    robot_arm_joint_state.velocity = vel
-    data_publisher.publish(robot_arm_joint_state)
-    while not rospy.is_shutdown():
-        if not(JOINT_VELOCITIES is None):
-            if(JOINT_VELOCITIES[2] < -3.13):
-                JOINT_VELOCITIES[2]
-                n_vel = list(JOINT_VELOCITIES)
-                n_vel[2] = 0.1
-                data_publisher.publish(robot_arm_joint_state)
-            elif(JOINT_VELOCITIES[2] > 3.13):
-                JOINT_VELOCITIES[2]
-                n_vel = list(JOINT_VELOCITIES)
-                n_vel[2] = -0.1
-                data_publisher.publish(robot_arm_joint_state)
+    # vel = [0,0,0,0,0,0,0]
+    # vel[2] = 0.5
+    # robot_arm_joint_state.velocity = vel
+    # data_publisher.publish(robot_arm_joint_state)
+    # while not rospy.is_shutdown():
+    #     if not(JOINT_VELOCITIES is None):
+    #         if(JOINT_VELOCITIES[2] < -3.13):
+    #             JOINT_VELOCITIES[2]
+    #             n_vel = list(JOINT_VELOCITIES)
+    #             n_vel[2] = 0.1
+    #             data_publisher.publish(robot_arm_joint_state)
+    #         elif(JOINT_VELOCITIES[2] > 3.13):
+    #             JOINT_VELOCITIES[2]
+    #             n_vel = list(JOINT_VELOCITIES)
+    #             n_vel[2] = -0.1
+    #             data_publisher.publish(robot_arm_joint_state)
 
 
 

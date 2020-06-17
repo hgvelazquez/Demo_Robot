@@ -94,6 +94,16 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        arm_link_L:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        arm_link_R:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         base_footprint:
           Alpha: 1
           Show Axes: false
@@ -162,6 +172,10 @@ Visualization Manager:
           Value: true
         arm_link_4:
           Value: true
+        arm_link_L:
+          Value: true
+        arm_link_R:
+          Value: true
         base_footprint:
           Value: true
         base_link:
@@ -199,7 +213,10 @@ Visualization Manager:
                     arm_link_2:
                       arm_link_3:
                         arm_link_4:
-                          {}
+                          arm_link_L:
+                            {}
+                          arm_link_R:
+                            {}
               caster_back_link:
                 {}
               caster_front_link:
@@ -246,25 +263,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.993509292602539
+      Distance: 0.9257938265800476
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.027126383036375046
-        Y: -0.010291878134012222
-        Z: -0.005484991706907749
+        X: -0.004172255750745535
+        Y: -0.030757755041122437
+        Z: 0.43183374404907227
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5947969555854797
+      Pitch: 0.25979700684547424
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.6985856294631958
+      Yaw: 0.22858601808547974
     Saved: ~
 Window Geometry:
   Displays:
