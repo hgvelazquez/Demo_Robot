@@ -28,6 +28,9 @@
 	<arg name="rvizconfig" default="$(find hola_tortuga)/rviz/urdf.rviz" />
 
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+	
+	<node pkg="hola_tortuga" type="map" name="mapa_tortuga" >
+  </node>
 
  
 </launch>
