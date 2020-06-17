@@ -280,10 +280,13 @@ int main( int argc, char** argv )
   }
   
   map.data = std::vector<int8_t>(data, data + size);
+  
+  tables = addTables(map);
 
   while (ros::ok())
   {
     marker_pub.publish(map);
+    table_marker_pub.publish(tables);
     ros::spinOnce();
     r.sleep();
   }
