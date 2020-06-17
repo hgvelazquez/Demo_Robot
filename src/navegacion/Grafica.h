@@ -1,6 +1,10 @@
 #include <vector>
 #include <queue>
 #include <stack>
+#include <set>
+#include <iterator> 
+#include <iostream> 
+#include <math.h>
 
 static int SIN_VISITAR = 0;  /* No ha sido metido a la cola. */
 static int EN_COLA = 1;      /* Lo metimos una vez a la cola. */
@@ -16,6 +20,11 @@ static int FINALIZADO = 3;   /* Ya lo procesamos. */
 
 class Vecino;
 class Vertice;
+// Función para construir la gráfica sólo con los vértices de Voronoi.
+std::vector<Vertice*> prune(std::vector<Vertice*> vertices, int first);
+// Función para hacer la búsqueda A*.
+std::stack<Vertice*> AStar(std::vector<Vertice*> vertices, Vertice* inicio, Vertice* meta);
+
 
 class Vertice{
   public:
@@ -25,6 +34,9 @@ class Vertice{
     int color; // Para nuestro problema específico, 0 indica arista, 1 nodo de Voronoi...
     int visitado;
     Vertice* padre;
+    float f;
+    float h;
+    float g;
     
     Vertice(int x1, int y1) {
       x = x1;
@@ -49,6 +61,15 @@ class Vecino{
       distancia = 0;
     } 
 };
+
+float distancia(Vertice* v1, Vertice* v2) {
+    int x1 = (v1->x);
+    int x2 = (v2->x);
+    int y1 = (v1->y);
+    int y2 = (v2->y);
+    float d = sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+    return d;
+}
 
 
 std::vector<Vertice*> prune(std::vector<Vertice*> vertices, int first) {
@@ -117,12 +138,8 @@ std::vector<Vertice*> prune(std::vector<Vertice*> vertices, int first) {
           (vecinos[i]->vec->visitado) = EN_COLA; 
           expanded.push(vecinos[i]->vec);
         } else if (vecinos[i]->vec->color == 1 && (vecinos[i]->vec->x != current->x || vecinos[i]->vec->y != current->y)) {
-          int x1 = (current->x);
-          int x2 = (vecinos[i]->vec->x);
-          int y1 = (current->y);
-          int y2 = (vecinos[i]->vec->y);
           Vertice* vor = vecinos[i]->vec->padre;
-          float d = sqrt((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
+          float d = distancia(current, vecinos[i]->vec);
           Vecino* vec1 = new Vecino(vor, d);
           Vecino* vec2 = new Vecino(current, d);
           (current->vecinos).push_back(vec1);
@@ -134,3 +151,69 @@ std::vector<Vertice*> prune(std::vector<Vertice*> vertices, int first) {
   }
   return prunedGraph;  
 }
+
+std::stack<Vertice*> AStar(std::vector<Vertice*> vertices, Vertice* inicio, Vertice* meta) {
+  auto cmp = [](Vertice* a, Vertice* b) { return (a->f) < (b->f);};
+  /* Usamos un set ordenado pues la cola de prioridades de la biblioteca estándar 
+   * no permite el acceso a los elementos, por lo que no podemos reordenar al 
+   * elemento al que le cambiemos el valor de f. En cambio, con el conjunto, 
+   * podemos acceder a los métodos erase e insert para sacarlo, cambiar su 
+   * valor y después reinsertar. Lo que perdemos es que toma O(log n) sacar el mímimo.
+   */
+  // Lista Abierta
+  std::set<Vertice*, decltype(cmp)> listaAbierta(cmp);
+  /* Lista cerrada, aún lo necesitamos aunque la abierta sea conjunto pues a la abierta 
+   " le eliminamos elementos.*/ 
+  std::set<Vertice*> listaCerrada;
+  int size = vertices.size();
+  for (int i = 0; i < size; i++) {
+      float d = distancia(vertices[i], meta);
+      vertices[i] -> h = d;
+      vertices[i] -> f = FLT_MAX;
+  }
+  
+  inicio->g = 0;
+  inicio->f = (inicio->g) + (inicio->h);
+  inicio->padre = NULL;
+  
+  meta->h = 0;
+  listaAbierta.insert(inicio);
+  while (!listaAbierta.empty()) {
+    Vertice* actual = (*listaAbierta.begin());
+    listaAbierta.erase(actual);
+    listaCerrada.insert(actual);
+     
+    if (actual == meta)
+      break;
+      
+    std::vector<Vecino*> vecinos = actual->vecinos;
+    size = vecinos.size();
+    for (int i = 0; i<size; i++) {
+      Vertice* sucesor = vecinos[i]->vec;
+      float g = (actual->g) + distancia(actual, sucesor);
+      if (listaCerrada.count(sucesor) == 0) {
+        if (listaAbierta.count(sucesor) == 0) {
+          sucesor->padre = actual;
+          sucesor->g = g;
+          sucesor->f = (sucesor->g) + (sucesor->h);
+          listaAbierta.insert(sucesor);
+        } else if (g < sucesor->g) {
+          listaAbierta.erase(sucesor);
+          sucesor->g = g;
+          sucesor->f = (sucesor->g) + (sucesor->h);
+          sucesor->padre = actual;
+          listaAbierta.insert(sucesor);
+        }
+      }
+    }
+  }
+  
+  std::stack<Vertice*> ruta;
+  Vertice* padre = meta;
+  while(padre != NULL) {
+      ruta.push(padre);
+      padre = padre->padre;
+  }   
+  return ruta;
+}
+
