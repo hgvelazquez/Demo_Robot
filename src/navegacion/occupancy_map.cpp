@@ -239,21 +239,6 @@ int main( int argc, char** argv )
 
   nav_msgs::OccupancyGrid map;
   visualization_msgs::MarkerArray tables;
-  visualization_msgs::Marker front_table;
-  
-  // La información del mapa.
-  map.header.frame_id = "/odom";
-  map.header.stamp = ros::Time::now();   // No caduca
-  map.info.resolution = RESOLUTION;     // [m/cell]
-  map.info.width = WIDTH;               // [cells]
-  map.info.height = HEIGHT;             // [cells]
-  map.info.origin.position.x = -RESOLUTION*(WIDTH/2.0);
-  map.info.origin.position.y = -RESOLUTION*(DOOR_END - 1);
-  map.info.origin.position.z = 0;
-  map.info.origin.orientation.x = 0.0;
-  map.info.origin.orientation.y = 0.0;
-  map.info.origin.orientation.z = 0.0;
-  map.info.origin.orientation.w = 1.0;
   
   int size = WIDTH * HEIGHT;
   int* obstacles = new int[size];
@@ -262,7 +247,7 @@ int main( int argc, char** argv )
     obstacles[i] = 0;
   
   
-  char* data = fillMap(obstacles, size);
+  char* data = fillMap(map, obstacles, size);
   
   std::vector<int> voronoi_squares = voronoi(data, false, obstacles);
   int l = voronoi_squares.size();
@@ -280,10 +265,13 @@ int main( int argc, char** argv )
   }
   
   map.data = std::vector<int8_t>(data, data + size);
+  
+  tables = addTables(map);
 
   while (ros::ok())
   {
     marker_pub.publish(map);
+    table_marker_pub.publish(tables);
     ros::spinOnce();
     r.sleep();
   }
