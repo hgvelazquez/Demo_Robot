@@ -101,13 +101,11 @@ void fillOneRectangle(char* data, int i, int j, int value, int* obstacles, int o
 }
 
 /**
- * Función encargada de llenar la información del mapa, así como 
- * de poner los obstáculos en el grid correspondiente a cada una
- * de las mesas.
- */ 
-char* fillMap(nav_msgs::OccupancyGrid& map, int* obstacles, int size) 
-{
-    
+ * Función que llena la información del mapa
+ * a excepción del vector con los valores de 
+ * ocupación.
+ */
+void mapHeader(nav_msgs::OccupancyGrid& map){
     // La información del mapa.
     map.header.frame_id = "/odom";
     map.header.stamp = ros::Time::now();   // No caduca
@@ -121,8 +119,15 @@ char* fillMap(nav_msgs::OccupancyGrid& map, int* obstacles, int size)
     map.info.origin.orientation.y = 0.0;
     map.info.origin.orientation.z = 0.0;
     map.info.origin.orientation.w = 1.0;
-  
-  
+}
+
+/**
+ * Función encargada de llenar la información del mapa, así como 
+ * de poner los obstáculos en el grid correspondiente a cada una
+ * de las mesas.
+ */ 
+char* fillMap(int* obstacles, int size) 
+{  
     obstacle_count = 0;
   
     char* data = new char[size];
@@ -180,7 +185,7 @@ char* fillMap(nav_msgs::OccupancyGrid& map, int* obstacles, int size)
     
     // Patas de en Medio
     int halfX = (CENTRAL_X_START+CENTRAL_X_END)/2;
-    int halfy = (CENTRAL_Y_START + CENTRAL_Y_END)/2;
+    int halfY = (CENTRAL_Y_START + CENTRAL_Y_END)/2;
     fillRectangle(data, halfX, CENTRAL_Y_START, 1+halfX, CENTRAL_Y_START,100, obstacles, obstacle_count++, true);
     fillRectangle(data, halfX, CENTRAL_Y_END,  1+halfX, CENTRAL_Y_END, 100, obstacles, obstacle_count++, true);
   
@@ -303,16 +308,17 @@ visualization_msgs::MarkerArray addTables(nav_msgs::OccupancyGrid& map)
   
   //Patas centrales Mesa de Enfrente y la mesa central (sobre el eje x)
     for (int i = 0; i<2; i++) {  
-        table_legs0.pose.position.x = tables.markers[i].pose.position.x;
+        float offset = (i==1) ? 0.1 : 0.0; // Sólo hay que mover las de la de en medio.
+        table_legs0.pose.position.x = tables.markers[i].pose.position.x - offset;
         table_legs0.pose.position.y = tables.markers[i].pose.position.y - tables.markers[i].scale.y/2 + 0.1;
-        table_legs1.pose.position.x = tables.markers[i].pose.position.x;
+        table_legs1.pose.position.x = tables.markers[i].pose.position.x - offset;
         table_legs1.pose.position.y = tables.markers[i].pose.position.y + tables.markers[i].scale.y/2 - 0.1;
         tables.markers.push_back(table_legs0);
         tables.markers.push_back(table_legs1);
         if (i == 1) { // Sólo la mesa central (tiene dos)
-            table_legs2.pose.position.x = tables.markers[i].pose.position.x + 0.2;
+            table_legs2.pose.position.x = tables.markers[i].pose.position.x + offset;
             table_legs2.pose.position.y = tables.markers[i].pose.position.y - tables.markers[i].scale.y/2 + 0.1;
-            table_legs3.pose.position.x = tables.markers[i].pose.position.x + 0.2;
+            table_legs3.pose.position.x = tables.markers[i].pose.position.x + offset;
             table_legs3.pose.position.y = tables.markers[i].pose.position.y + tables.markers[i].scale.y/2 - 0.1;
             tables.markers.push_back(table_legs2);
             tables.markers.push_back(table_legs3);   
@@ -328,14 +334,14 @@ visualization_msgs::MarkerArray addTables(nav_msgs::OccupancyGrid& map)
     tables.markers.push_back(table_legs0);
     tables.markers.push_back(table_legs1);
   
-    // Demás patas dentrales de la mesa del centro  
+    // Demás patas centrales de la mesa del centro  
     table_legs0.pose.position.x = tables.markers[1].pose.position.x - tables.markers[1].scale.x/2 + 0.1;
     table_legs0.pose.position.y = tables.markers[1].pose.position.y;
-    table_legs1.pose.position.x = tables.markers[1].pose.position.x;
+    table_legs1.pose.position.x = tables.markers[1].pose.position.x + 0.1;
     table_legs1.pose.position.y = tables.markers[1].pose.position.y;
     table_legs2.pose.position.x = tables.markers[1].pose.position.x + tables.markers[1].scale.x/2 - 0.1;
     table_legs2.pose.position.y = tables.markers[1].pose.position.y;
-    table_legs3.pose.position.x = tables.markers[1].pose.position.x + 0.2;
+    table_legs3.pose.position.x = tables.markers[1].pose.position.x - 0.1;
     table_legs3.pose.position.y = tables.markers[1].pose.position.y;
     tables.markers.push_back(table_legs0);
     tables.markers.push_back(table_legs1);

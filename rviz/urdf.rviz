@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
+        - /Grid1
       Splitter Ratio: 0.5971428751945496
     Tree Height: 410
   - Class: rviz/Selection
@@ -44,8 +45,8 @@ Visualization Manager:
       Name: Grid
       Normal Cell Count: 0
       Offset:
-        X: 0
-        Y: -0.5
+        X: 0.10000000149011612
+        Y: -0.6000000238418579
         Z: 0
       Plane: XY
       Plane Cell Count: 50
@@ -224,6 +225,22 @@ Visualization Manager:
       Topic: /occupancy_map
       Unreliable: false
       Use Timestamp: false
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /obstacles_marker
+      Name: MarkerArray
+      Namespaces:
+        back_table: true
+        center_table: true
+        front_table: true
+        l_table: true
+        side_table: true
+        table_leg_0: true
+        table_leg_1: true
+        table_leg_2: true
+        table_leg_3: true
+      Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
