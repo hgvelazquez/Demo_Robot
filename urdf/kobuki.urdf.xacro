@@ -178,7 +178,7 @@
 
 
     <joint name="arm_base_joint" type="fixed">
-      <origin xyz="0 0 0.089" rpy="0 0 0" />
+      <origin xyz="0.065 0 0.089" rpy="0 0 0" />
       <parent link="base_link"/>
       <child link="arm_base_link" />
     </joint>
@@ -186,14 +186,14 @@
     <link name="arm_base_link">
       <visual>
         <geometry>
-          <cylinder length="0.08" radius="0.07"/>
+          <cylinder length="0.05" radius="0.07"/>
         </geometry>
-        <origin xyz="0.0 0.0 0.04"/>
+        <origin xyz="0.0 0.0 0.025"/>
         <material name="blue"/>
       </visual>
       <collision>
         <geometry>
-          <cylinder length="0.1" radius="0.4"/>
+          <cylinder length="0.05" radius="0.07"/>
         </geometry>
         <origin xyz="0.0 0.0 0.025"/>
         <material name="blue"/>
@@ -204,7 +204,7 @@
     <joint name="joint_arm_0" type="revolute">
       <parent link="arm_base_link"/>
       <child link="arm_link_0"/>
-      <origin xyz="0.0 0.0 0.08"/>
+      <origin xyz="0.0 0.0 0.05"/>
       <axis xyz="0 0 1"/>
       <limit effort="1000" lower="-3.14" upper="3.14" velocity="5"/>
     </joint>
