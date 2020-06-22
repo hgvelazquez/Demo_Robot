@@ -27,6 +27,8 @@ geometry_msgs::Point nav_goal;
 int have_map;
 float XI = 0.8;
 float ETA = 1.2;
+bool turning; // Agregamos esta bandera para que gire hasta que no se oriente al goal (aprox).
+// Hay que agregar la parte paera
 
 class Sensor {
   public:
@@ -137,6 +139,7 @@ class Sensor {
               if (j >= height || MAP.data[j*width + i] == 100) {
                 crash.x = xn + MAP.info.origin.position.x;
                 crash.y = yn + MAP.info.origin.position.y;
+                return crash;
               }
             }
           }
@@ -148,11 +151,11 @@ class Sensor {
         // THIRD Quadrant.
         if (angle <= -M_PI/2){
           // We will move in both positive directions
-          while(i>0 && j > 0) {
+          while(i>=0 && j >= 0) {
             xn = i*resolution;
             yn = y + m*(xn - x);
             
-            if (yn < (j+1)*resolution && yn > j*resolution){
+            if (yn < (j+1)*resolution && yn >= j*resolution){
               i--;
               if (i < 0 || MAP.data[j*width + i] == 100) {
                 crash.x = xn + MAP.info.origin.position.x;
@@ -169,9 +172,9 @@ class Sensor {
               }
             } else {
               yn = j*resolution;
-              j -= (m != 0)? 1 : 0;
               xn = (m != 0)? (yn - y)/m + x: xn-resolution;
-              xn = (xn < -200)? xn : -MAP.info.origin.position.x;
+              xn = (xn > -20)? xn : -MAP.info.origin.position.x;
+              j -= (m != 0)? 1 : 0;
               if (j < 0 || MAP.data[j*width + i] == 100) {
                 crash.x = xn + MAP.info.origin.position.x;
                 crash.y = yn + MAP.info.origin.position.y;
@@ -203,8 +206,8 @@ class Sensor {
                 return crash;
               }
             } else {
+              yn = (j)*resolution;
               j -= (m != 0)? 1 : 0;
-              yn = (j+1)*resolution;
               xn = (m!=0)? (yn - y)/m + x: xn + resolution;
               if (j < 0 || MAP.data[j*width + i] == 100) {
                 crash.x = xn + MAP.info.origin.position.x;
@@ -219,7 +222,7 @@ class Sensor {
     }
 };
 
-const int SENSOR_NUMBER = 12;
+const int SENSOR_NUMBER = 18;
 Sensor SENSORS[SENSOR_NUMBER];
 
 void putSensors() {
@@ -237,7 +240,6 @@ void putSensors() {
     sensor.angle_vector = v;
     sensor.angle = i*fraction;
     sensor.front = (i*fraction < M_PI/4 || i*fraction > 7*M_PI/4);
-    printf("%2.3f\t%2.3f\t%2.3f\t%2.3f\t%2.3f\n", i*fraction, v.w(), v.x(), v.y(), v.z());
     v = rotation*v*inverse(rotation);
     v.normalize();
     tf2::Quaternion v2 = rotation*v*inverse(rotation);
@@ -316,7 +318,7 @@ visualization_msgs::MarkerArray drawSensors()
     
     geometry_msgs::Point actual;// 0 al inicializarse.
     
-    float nav_d0 = 1;
+    float nav_d0 = 0.9;
     if (nav_move == 1) {
       //actual.x = 0.2*cos(SENSORS[i].angle); 
       //actual.y = 0.2*sin(SENSORS[i].angle);
@@ -327,6 +329,8 @@ visualization_msgs::MarkerArray drawSensors()
         m = i;
       }
       
+      float weight = 2*fabs(M_PI - angle)/6;
+      printf("%2.3f %2.3f\n",angle, weight);
       if (nav_d < nav_d0) {
         count++;
         nav_d = (nav_d < 0.00001) ? 0.00001 : nav_d; // Tope a la fuerza repulsora.
@@ -339,8 +343,8 @@ visualization_msgs::MarkerArray drawSensors()
         float factor = ETA*((1/nav_d) - (1/nav_d0))*(1/nav_d*nav_d*nav_d);  
         
         if (SENSORS[i].front)
-          nav_new.linear.x += factor*(-end.x);
-        nav_new.angular.z += factor*(-end.y);
+          nav_new.linear.x += weight*factor*(-end.x);
+        nav_new.angular.z += weight*factor*(-end.y);
         }  
     }
     
@@ -375,7 +379,10 @@ visualization_msgs::MarkerArray drawSensors()
         nav_new.linear.x -= 0.5*XI*deltax;
         nav_new.angular.z -= 0.5*XI*deltay;
       }
-      else {  
+      else if (nav_d < 0.4) {
+        nav_new.linear.x -= 6*XI*deltax;
+        nav_new.angular.z -= 6*XI*deltay;
+      }else {  
         nav_new.linear.x -= 2*XI*deltax;
         nav_new.angular.z -= 2*XI*deltay;
       }
@@ -384,22 +391,20 @@ visualization_msgs::MarkerArray drawSensors()
       float sumz = 0.7*nav_vel.angular.z + 0.3*nav_new.angular.z;
       float norm = sumx*sumx + sumz*sumz;
       norm = sqrt(norm);
-      nav_vel.linear.x = sumx/(norm);
-      nav_vel.angular.z = sumz/(norm);
-      
-      int diam = (m + (SENSOR_NUMBER/2)) % SENSOR_NUMBER;
+      tf2::Vector3 v1(sumx, sumz, 0);
+      tf2::Vector3 v2(nav_vel.linear.x, nav_vel.angular.z, 0);
       /**
-      if (min < 0.5 && SENSORS[m].front) {
-        if (SENSORS[m].angle == 0) {
-          nav_new.linear.x *= 0.2;
-        } else if (SENSORS[m].angle < M_PI) {
-          nav_new.angular.z *= -1;
-          nav_new.linear.x = 0.2;
-        } else {
-          nav_new.angular.z = fabs(nav_new.angular.z);
-          nav_new.linear.x = 0.2;
-        }
-      }*/  
+      if (sumx < 0) {
+          nav_vel.linear.x = 0;
+          nav_vel.angular.z = M_PI      
+      }*/
+      if (v2.angle(v1) > M_PI/4) {
+          nav_vel.linear.x = 0;//sumx/20*norm;
+          nav_vel.angular.z = 19*sumz/20*norm;
+      } else {
+        nav_vel.linear.x = sumx/(norm);
+        nav_vel.angular.z = sumz/(norm);
+      }
   }
   
   else {
@@ -440,9 +445,9 @@ visualization_msgs::MarkerArray drawSensors()
   return sensors;
 }  
 
-void nav_receiveNavGoal(const geometry_msgs::PoseStamped& poseStamped)
+void nav_receiveNavGoal(const geometry_msgs::Point& goalStamped)
 {
-  nav_goal = poseStamped.pose.position;      
+  nav_goal = goalStamped;      
   nav_move = 1;
 }
 
@@ -457,7 +462,7 @@ int main (int argc, char** argv)
   ros::Subscriber sub_odom = n.subscribe("/odom", 5, updateSensors);
   ros::Subscriber sub_map = n.subscribe("/occupancy_map", 5, getMapParams);
   ros::Publisher nav_velocity_pub = n.advertise<geometry_msgs::Twist>("/mobile_base/commands/velocity", 1);
-  ros::Subscriber nav_sub = n.subscribe("/move_base_simple/goal", 5, nav_receiveNavGoal);
+  ros::Subscriber nav_sub = n.subscribe("/a_star_goal", 1, nav_receiveNavGoal);
 
   have_map = 0;
   nav_move = 0;
