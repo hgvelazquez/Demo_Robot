@@ -178,7 +178,7 @@
 
 
     <joint name="arm_base_joint" type="fixed">
-      <origin xyz="0 0 0.089" rpy="0 0 0" />
+      <origin xyz="0.065 0 0.089" rpy="0 0 0" />
       <parent link="base_link"/>
       <child link="arm_base_link" />
     </joint>
@@ -186,14 +186,14 @@
     <link name="arm_base_link">
       <visual>
         <geometry>
-          <cylinder length="0.08" radius="0.07"/>
+          <cylinder length="0.05" radius="0.07"/>
         </geometry>
-        <origin xyz="0.0 0.0 0.04"/>
+        <origin xyz="0.0 0.0 0.025"/>
         <material name="blue"/>
       </visual>
       <collision>
         <geometry>
-          <cylinder length="0.1" radius="0.4"/>
+          <cylinder length="0.05" radius="0.07"/>
         </geometry>
         <origin xyz="0.0 0.0 0.025"/>
         <material name="blue"/>
@@ -204,7 +204,7 @@
     <joint name="joint_arm_0" type="revolute">
       <parent link="arm_base_link"/>
       <child link="arm_link_0"/>
-      <origin xyz="0.0 0.0 0.08"/>
+      <origin xyz="0.0 0.0 0.05"/>
       <axis xyz="0 0 1"/>
       <limit effort="1000" lower="-3.14" upper="3.14" velocity="5"/>
     </joint>
@@ -320,12 +320,11 @@
     </link>
 
 
-    <joint name="arm_joint_4" type="prismatic">
+    <joint name="arm_joint_4" type="fixed">
       <parent link="arm_link_3"/>
       <child link="arm_link_4"/>
-      <origin xyz="0.0 0.0 0.11"/>
+      <origin xyz="0.0 0.0 0.13"/>
       <axis xyz="0 0 1"/>
-      <limit effort="1000" lower="-0.10" upper="0.06" velocity="5"/>
     </joint>
 
     <link name="arm_link_4">
@@ -344,6 +343,54 @@
       </collision>
     </link> 
     
+    <joint name="arm_joint_L" type="prismatic">
+      <parent link="arm_link_4"/>
+      <child link="arm_link_L"/>
+      <origin xyz="0.0 0.005 0.0"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="100" lower="0.0" upper="0.03" velocity="5"/>
+    </joint>
+
+    <link name="arm_link_L">
+      <visual>
+        <geometry>
+          <box size="0.02 0.01 0.04"/>
+        </geometry>
+        <origin xyz="0.0 0.0 0.03"/>
+        <material name="blue"/>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="0.02 0.01 0.04"/>
+        </geometry>
+        <origin xyz="0.0 0.0 0.03"/>
+      </collision>
+    </link> 
+
+    <joint name="arm_joint_R" type="prismatic">
+      <parent link="arm_link_4"/>
+      <child link="arm_link_R"/>
+      <origin xyz="0.0 -0.005 0.0"/>
+      <axis xyz="0 -1 0"/>
+      <limit effort="100" lower="0.0" upper="0.03" velocity="5"/>
+    </joint>
+
+    <link name="arm_link_R">
+      <visual>
+        <geometry>
+          <box size="0.02 0.01 0.04"/>
+        </geometry>
+        <origin xyz="0.0 0.0 0.03"/>
+        <material name="blue"/>
+      </visual>
+      <collision>
+        <geometry>
+          <box size="0.02 0.01 0.04"/>
+        </geometry>
+        <origin xyz="0.0 0.0 0.03"/>
+      </collision>
+    </link> 
+
     <!---->
 
     <!-- Kobuki's sensors -->
