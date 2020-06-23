@@ -1,7 +1,7 @@
 static int LIBRE = 0;  /* No ha sido metido a la cola. */
 static int OBSTACULO = 100;      /* Lo metimos una vez a la cola. */
-static int ARISTA = 150;    /* Ya lo expandimos. */
-static int NODO = 250;   /* Ya lo procesamos. */
+static int ARISTA = 40;    /* Ya lo expandimos. */
+static int NODO = 80;   /* Ya lo procesamos. */
 
 class Celda{
   public:

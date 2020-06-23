@@ -118,7 +118,6 @@ void receiveNavGoal(const geometry_msgs::PoseStamped& poseStamped)
   // Obtenemos la ruta en la gráfica con A*.
   std::stack<Vertice*> a = AStar(VORONOI_GRAPH, inic, fin); 
   a_star_route = a;
-  printf("%d\n", a.size());
 }
 
 
@@ -145,10 +144,14 @@ void processCellVoronoi(Celda& c, Celda& padre,
 }
 
 /**
- * Función auxiliar para añadir los vecinos a la gráfica preliminar
- * (con aristas) de voronoi. Si la celda es parte, se añade y regresa
- * 1, en caso contrario no hace nada y regresa 0.
- */ 
+ * Función auxiliar que se encarga de agregar un vecino a un vértice
+ * en la gráfica de voronoi. 
+ * Se agrega el vecino al vértice v si y sólo si, se había detectado que 
+ * la celda (del grid) correspondiente a la celda p era parte de la gráfica
+ * de voronoi (incluyendo celdas aristas, por lo que después hay que 
+ * buscar a los vecinos que si son celdas nodo).
+ * Regresa 1 si añade el vecino, 0 en otro caso. 
+ */
 int addVecino(Celda p, Vertice* v) {
     if (p.seleccionado > 0) {
         int x = p.x;

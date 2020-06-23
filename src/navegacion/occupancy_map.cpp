@@ -156,7 +156,7 @@ int main( int argc, char** argv )
     /* Creamos los componentes de ROS. */
     ros::init(argc, argv, "basic_map");
     ros::NodeHandle n;
-    ros::Rate r(1);
+    ros::Rate r(10);
     ros::Publisher table_marker_pub = n.advertise<visualization_msgs::MarkerArray>("obstacles_marker", 1);
     ros::Publisher marker_pub = n.advertise<nav_msgs::OccupancyGrid>("occupancy_map", 1);
     ros::Publisher vor_pub = n.advertise<nav_msgs::OccupancyGrid>("voronoi_info", 1);
@@ -208,6 +208,7 @@ int main( int argc, char** argv )
     }
   
     map.data = std::vector<int8_t>(data, data + size);
+    map_for_vor.data = std::vector<int8_t>(data_for_vor, data_for_vor + size);
     tables = addTables(map);
 
     while (ros::ok())
