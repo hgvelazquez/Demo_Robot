@@ -113,7 +113,7 @@ void updateSensors(const nav_msgs::Odometry::ConstPtr& msg)
     // Actualizamos a posición y orientación de la KOBUKI.
     KOBUKI_POSITION = pose;
     // Si estamos lo suficientemente cerca de la meta, marcamos que ya no hay que moverse.
-    if (SENSORS[0].distance(pose.position, nav_goal) < 0.2)
+    if (SENSORS[0].distance(pose.position, nav_goal) < 0.1)
         nav_move = 0;  
 }
 

@@ -21,6 +21,8 @@
 #include "MapFiller.h"
 #include "Voronoi_Utils.h"
 
+#include <hola_tortuga/Finished.h>
+
 /* Variables para construir y guardar la gráfica de Voronoi. */
 // El mapa con la información de obstáculos.
 nav_msgs::OccupancyGrid MAP;
@@ -104,7 +106,7 @@ void updatePoint(const nav_msgs::Odometry::ConstPtr& msg){
         float dx = kob_pose.position.x - goal.x;
         float dy = kob_pose.position.y - goal.y;
         float d = sqrt(dx*dx + dy*dy);
-        begin_turn = d < 0.2;  
+        begin_turn = d < 0.1;  
     } 
 }
 
@@ -402,6 +404,7 @@ int main( int argc, char** argv )
     // Tópicos donde publicaremos.
     ros::Publisher a_star_pub = n.advertise<geometry_msgs::Point>("a_star_goal", 5);
     ros::Publisher rotate_pub = n.advertise<geometry_msgs::Twist>("/mobile_base/commands/velocity", 1);
+    ros::Publisher finished_pub = n.advertise<hola_tortuga::Finished>("demo_finished", 5);
     // Tópicos donde escucharemos.
     ros::Subscriber nav_sub = n.subscribe("/move_base_simple/goal", 5, receiveNavGoal);
     ros::Subscriber odom_sub = n.subscribe("/odom", 5, updatePoint);
@@ -425,17 +428,26 @@ int main( int argc, char** argv )
     
     while (ros::ok())
     {
+        // Mensaje de término. 
+        hola_tortuga::Finished f;
         ros::spinOnce();
         // Hay que agregar código para no republicar el punto...
         if (!a_star_route.empty() && !reached_last) {
             a_star_pub.publish(next);
+            f.finished = 0;
         } else if (sent_goal == 0) {     
             printf("GOING TO FINAL GOAL\n");
             a_star_pub.publish(goal);
-            sent_goal = 1;    
+            sent_goal = 1;
+            f.finished = 0;
         } else if (begin_turn == 1 && turn == 0) {
             rotate_pub.publish(rotate());
-        }
+            f.finished = 0;
+        } else if (turn == 1){
+            // Ya hicimos todo lo que teníamos que hacer. 
+            f.finished = 1;
+        }    
+        finished_pub.publish(f);
         r.sleep();
     }
 }
