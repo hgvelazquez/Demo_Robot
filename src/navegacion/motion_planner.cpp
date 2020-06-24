@@ -4,13 +4,21 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <nav_msgs/OccupancyGrid.h>
 #include <nav_msgs/Odometry.h>
+
 #include <geometry_msgs/PoseStamped.h>
+#include <geometry_msgs/Twist.h>
+
+#include <tf/transform_datatypes.h>
+#include <tf2/LinearMath/Quaternion.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+
 #include <vector>
 #include <queue>
 #include <stack>
+#include <math.h>
+
 #include "Grafica.h"
 #include "MapFiller.h"
-#include <math.h>
 #include "Voronoi_Utils.h"
 
 /* Variables para construir y guardar la gráfica de Voronoi. */
@@ -28,11 +36,14 @@ float origin_x;             /* El origen en x del mapa (para lectura sencilla). 
 float origin_y;             /* El origen en y del mapa (para lectura sencilla). */
 float resolution;           /* La resolución del mapa (para lectura sencilla). */
 geometry_msgs::Point next;  /* La siguiente meta de la ruta. */
+int begin_turn;             /* Nos dice si hay que iniciar a girar .*/
+int turn;                   /* Nos dice si ya giramos.*/
 
 /* Varables para las metas intermedias. */
 std::stack<Vertice*> a_star_route;  /* La pila con las metas de la ruta. */
-geometry_msgs::Point kob_pos;       /* La ´posición actual de la KOBUKI. */
+geometry_msgs::Pose kob_pose;       /* La ´posición actual de la KOBUKI. */
 bool almost;                        /* Nos indica si llegamos aproximadamente a la meta intermedia. */
+bool reached_last;                  /* Nos dice si ya llegamos a la última intermedia.*/
 
 // Variable que nos indica que ya tenemos la información del mapa y podemos dejar de ecuchar.  
 bool received_map;  
@@ -53,25 +64,6 @@ void getMapParams(const  nav_msgs::OccupancyGrid::ConstPtr& msg)
 }
 
 /**
- * Función callback para el odómetro.
- * Se encarga de actualizar la variable kob_pos, y adicionalmente, 
- * dependiendo de la distancia a la que se encuentra de la meta 
- * siguiente, actualiza almost, lo cual nos dará la señal de 
- * cambiar a la siguiente meta.
- */
-void updatePoint(const nav_msgs::Odometry::ConstPtr& msg){
-    nav_msgs::Odometry od = *msg;
-    kob_pos = od.pose.pose.position;
-    // Si ya enviamos la meta, no tenemos que actualizar nada ya. 
-    if (sent_goal == 0) {
-        float dx = kob_pos.x - next.x;
-        float dy = kob_pos.y - next.y;
-        float d = sqrt(dx*dx + dy*dy);
-        almost = d < 0.2;
-    }     
-}
-
-/**
  * Función auxiliar para obtener el punto real (no como celda) 
  * dado un vértice. 
  */
@@ -80,6 +72,40 @@ geometry_msgs::Point getPoint(Vertice* v) {
     p.x = (v->x)*0.2  + origin_x;
     p.y = (v->y)*0.2 + origin_y;
     return p;
+}
+
+/**
+ * Función callback para el odómetro.
+ * Se encarga de actualizar la variable kob_pose, y adicionalmente, 
+ * dependiendo de la distancia a la que se encuentra de la meta 
+ * siguiente, actualiza almost, lo cual nos dará la señal de 
+ * cambiar a la siguiente meta.
+ */
+void updatePoint(const nav_msgs::Odometry::ConstPtr& msg){
+    nav_msgs::Odometry od = *msg;
+    kob_pose = od.pose.pose;
+    // Si ya enviamos la meta, no tenemos que actualizar nada ya. 
+    if (sent_goal == 0) {
+        float dx = kob_pose.position.x - next.x;
+        float dy = kob_pose.position.y - next.y;
+        float d = sqrt(dx*dx + dy*dy);
+        almost = d < 0.2;            
+        if (!a_star_route.empty() && almost) {
+            a_star_route.pop();
+            if (a_star_route.empty()) {
+                reached_last = true;
+            } else {
+                next = getPoint(a_star_route.top());
+                printf("NEXT: %d, %d\n", a_star_route.top()->x, a_star_route.top()->y);
+            }
+            almost = false;
+        }
+    } else {
+        float dx = kob_pose.position.x - goal.x;
+        float dy = kob_pose.position.y - goal.y;
+        float d = sqrt(dx*dx + dy*dy);
+        begin_turn = d < 0.2;  
+    } 
 }
 
 /**
@@ -97,8 +123,8 @@ void receiveNavGoal(const geometry_msgs::PoseStamped& poseStamped)
   sent_goal = 0;
   
   // Obtenemos la celda en la que se encuentra la KOBUKI.
-  int u = floor((kob_pos.x - origin_x)/0.2);
-  int w = floor((kob_pos.y - origin_y)/0.2);
+  int u = floor((kob_pose.position.x - origin_x)/0.2);
+  int w = floor((kob_pose.position.y - origin_y)/0.2);
   printf("YOU ARE AT: %d, %d\n", u, w);
   
   // Obtenemos la celda a la que queremos llegar. 
@@ -117,6 +143,11 @@ void receiveNavGoal(const geometry_msgs::PoseStamped& poseStamped)
   // Obtenemos la ruta en la gráfica con A*.
   std::stack<Vertice*> a = AStar(VORONOI_GRAPH, inic, fin); 
   a_star_route = a;
+  next = getPoint(a_star_route.top());
+  printf("NEXT: %d, %d\n", a_star_route.top()->x, a_star_route.top()->y);
+  almost = false;
+  reached_last = false;
+  turn = 0;
 }
 
 
@@ -325,6 +356,41 @@ void construyeVoronoi()
     nearest_voronoi = nearest_vor;
 }
 
+/**
+ * Función que rota a la KOBUKI hasta que quede viendo defrente al
+ * objetivo original.
+ */
+geometry_msgs::Twist rotate() 
+{
+    geometry_msgs::Twist vel;
+    // Creamos el cuaternión para rotar a las coordenadas adecuadas.
+    tf2::Quaternion v1(kob_pose.orientation.x, kob_pose.orientation.y, kob_pose.orientation.z, kob_pose.orientation.w);
+    
+    // Pasamos el goal al marco de la KOBUKI.
+    geometry_msgs::Point goal_coord;
+    // Trasladamos.
+    goal_coord.x = goal.x -  kob_pose.position.x;
+    goal_coord.y = goal.y -  kob_pose.position.y;
+    // Rotamos.
+    tf2::Quaternion g(goal_coord.x, goal_coord.y, 0, 0);
+    g = inverse(v1)*g*v1;
+    goal_coord.x = g.x();
+    goal_coord.y = g.y();
+    
+    // Vectores para calcular el ángulo entre el goal y el frente de la KOBUKI.
+    tf2::Vector3 vg(goal_coord.x, goal_coord.y, 0);
+    tf2::Vector3 vk(1, 0, 0);
+    float a = vk.angle(vg);
+    if (a > 5*M_PI/180) { // Margen de error de 5 grados.
+        float factor = (a < M_PI/3) ? 2 : 1; 
+        int sign = (goal_coord.y > 0) ? 1 : -1;
+        vel.angular.z = factor*sign*a;
+    } else {
+        turn = 1;
+    }
+    return vel;
+}
+
 
 int main( int argc, char** argv )
 {
@@ -332,14 +398,17 @@ int main( int argc, char** argv )
     ros::init(argc, argv, "motion_planner");
     ros::NodeHandle n;
     ros::Rate r(10);
-  
+    
+    // Tópicos donde publicaremos.
     ros::Publisher a_star_pub = n.advertise<geometry_msgs::Point>("a_star_goal", 5);
+    ros::Publisher rotate_pub = n.advertise<geometry_msgs::Twist>("/mobile_base/commands/velocity", 1);
+    // Tópicos donde escucharemos.
     ros::Subscriber nav_sub = n.subscribe("/move_base_simple/goal", 5, receiveNavGoal);
     ros::Subscriber odom_sub = n.subscribe("/odom", 5, updatePoint);
     ros::Subscriber map_sub = n.subscribe("/voronoi_info", 5, getMapParams);
   
   
-    received_map = false;   
+    received_map = false;
     // Esperamos hasta recibir el mapa por primera vez...
     while(ros::ok() && !received_map)
     {
@@ -348,24 +417,24 @@ int main( int argc, char** argv )
     }
     // Y ya no lo recibimos más (sólo lo necesitamos una vez, no cambia).
     map_sub.shutdown();
-    construyeVoronoi();
     
-    //bool published_next = false;
+    construyeVoronoi();
+    begin_turn = 0; /* Hasta que no tengamos que girar, no cambiamos esto.*/
+    turn = 0;
+    reached_last = false;
+    
     while (ros::ok())
     {
         ros::spinOnce();
         // Hay que agregar código para no republicar el punto...
-        if (!a_star_route.empty()) {
-            if (almost) {
-                next = getPoint(a_star_route.top());
-                a_star_route.pop();
-                almost = false;
-            }  
+        if (!a_star_route.empty() && !reached_last) {
             a_star_pub.publish(next);
-        } else if (sent_goal == 0) {
-            next = goal;
+        } else if (sent_goal == 0) {     
+            printf("GOING TO FINAL GOAL\n");
             a_star_pub.publish(goal);
-            sent_goal = 1;
+            sent_goal = 1;    
+        } else if (begin_turn == 1 && turn == 0) {
+            rotate_pub.publish(rotate());
         }
         r.sleep();
     }
