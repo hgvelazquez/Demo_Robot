@@ -67,7 +67,7 @@ void updatePoint(const nav_msgs::Odometry::ConstPtr& msg){
         float dx = kob_pos.x - next.x;
         float dy = kob_pos.y - next.y;
         float d = sqrt(dx*dx + dy*dy);
-        almost = d < 0.3;
+        almost = d < 0.2;
     }     
 }
 
@@ -114,7 +114,6 @@ void receiveNavGoal(const geometry_msgs::PoseStamped& poseStamped)
   printf("%2.3f, %2.3f\n", getPoint(inic).x, getPoint(inic).y);
   printf("END:  %d, %d\n", fin->x, fin->y);
   printf("%2.3f, %2.3f\n", getPoint(fin).x, getPoint(fin).y);
-  printf("BEGINNING ASTAR\n");
   // Obtenemos la ruta en la gráfica con A*.
   std::stack<Vertice*> a = AStar(VORONOI_GRAPH, inic, fin); 
   a_star_route = a;
@@ -361,13 +360,8 @@ int main( int argc, char** argv )
                 next = getPoint(a_star_route.top());
                 a_star_route.pop();
                 almost = false;
-                //published_next = false;
             }  
-            //if (!published_next) {
-                printf("PUBLISHED\n");
-                a_star_pub.publish(next);
-                //published_next = true;
-            //}    
+            a_star_pub.publish(next);
         } else if (sent_goal == 0) {
             next = goal;
             a_star_pub.publish(goal);
