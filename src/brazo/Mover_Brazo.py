@@ -42,7 +42,7 @@ def move_to_target(target):
         if len(JOINT_POSITIONS) == 8 :
             for i in range(len(JOINT_POSITIONS)):
                 if i >= 3 :
-                    if (abs(JOINT_POSITIONS[i] - target[i]) > .01):
+                    if (abs(JOINT_POSITIONS[i] - target[i]) >= .01):
                         if(JOINT_POSITIONS[i] < target[i]):
                             new.append(JOINT_POSITIONS[i] + .01)
                             finished = finished and False
@@ -128,7 +128,7 @@ def handle_move_arm(instruction):
         JOINT_TARGET = get_target_close_gripper()
         move_to_target(JOINT_TARGET)
         print("\nGarra cerrada\n")
-    
+
     return SetBoolResponse(True,"Arm moved succesfully!\n")
 
 

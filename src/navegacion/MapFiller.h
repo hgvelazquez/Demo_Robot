@@ -180,7 +180,7 @@ char* fillMap(nav_msgs::OccupancyGrid& map, int* obstacles, int size)
     
     // Patas de en Medio
     int halfX = (CENTRAL_X_START+CENTRAL_X_END)/2;
-    int halfy = (CENTRAL_Y_START + CENTRAL_Y_END)/2;
+    int halfY = (CENTRAL_Y_START + CENTRAL_Y_END)/2;
     fillRectangle(data, halfX, CENTRAL_Y_START, 1+halfX, CENTRAL_Y_START,100, obstacles, obstacle_count++, true);
     fillRectangle(data, halfX, CENTRAL_Y_END,  1+halfX, CENTRAL_Y_END, 100, obstacles, obstacle_count++, true);
   

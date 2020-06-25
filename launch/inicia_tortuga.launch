@@ -29,8 +29,10 @@
 
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
 	
-	<node pkg="hola_tortuga" type="map" name="mapa_tortuga" >
-  </node>
+	<node pkg="hola_tortuga" type="map" name="mapa_tortuga" ></node>
+  <node pkg="hola_tortuga" type="campos" name="campos_tortuga" ></node>
+  <node pkg="hola_tortuga" type="targets" name="objetivos_tortuga" ></node>
+  <!-- <node pkg="hola_tortuga" type="Mover_Brazo.py" name="mover_brazo_tortuga" output="screen"></node> -->
 
  
 </launch>

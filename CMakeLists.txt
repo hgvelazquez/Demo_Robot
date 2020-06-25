@@ -145,6 +145,7 @@ include_directories(
 ## same as for the library above
 add_executable(map src/navegacion/occupancy_map.cpp)
 add_executable(campos src/navegacion/CamposSensores.cpp)
+add_executable(targets src/Objetivos.cpp)
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
@@ -207,6 +208,11 @@ target_link_libraries(
 
 target_link_libraries(
   campos
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(
+  targets
   ${catkin_LIBRARIES}
 )
 
