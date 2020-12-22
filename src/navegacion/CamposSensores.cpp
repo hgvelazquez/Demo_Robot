@@ -34,13 +34,15 @@ float ETA = 1.2;
 bool turning; // Agregamos esta bandera para que gire hasta que no se oriente al goal (aprox).
 // Hay que agregar la parte paera
 bool changed_goal;
-const int SENSOR_NUMBER = 18;
-Sensor SENSORS[SENSOR_NUMBER];
+const int SENSOR_NUMBER = 18; // Número de sensores que se dibujarán a la kobuki
+Sensor SENSORS[SENSOR_NUMBER]; // Arreglo con los sensores
+std::string s;
 
 /**
  * Función que se encarga de crear los sensores que tendrá 
- * la simulación. Pone, sobre la circunferencia de la KOBUKI
- * de manera equidistate, un sensor. Pone SENSOR_NUMBER sensores.
+ * la simulación. Pone cada uno de los sensores sobre 
+ * la circunferencia de la KOBUKI de manera equidistate.
+ * Inicializa el arreglo de sensores Sensor SENSOR_NUMBER.
  */
 void putSensors() 
 {
@@ -282,7 +284,7 @@ visualization_msgs::Marker drawSpeed(geometry_msgs::Twist vel)
     visualization_msgs::Marker nav_sensor;
     //General data of the Vector
     nav_sensor.id = 100; // Más que cualquier número de sensores.
-    nav_sensor.header.frame_id = "/base_link";
+    nav_sensor.header.frame_id = ("/"+s+"_tf/base_link").c_str();
     nav_sensor.header.stamp = ros::Time::now();   // No caduca
     nav_sensor.ns = "vel";
     nav_sensor.type = visualization_msgs::Marker::ARROW;
@@ -323,8 +325,17 @@ visualization_msgs::MarkerArray drawSensors()
     for(int i = 0; i < SENSOR_NUMBER; i++) 
     {
         visualization_msgs::Marker current_sensor;
+
         //General data of the Line
-        current_sensor.header.frame_id = "/base_link"; // En coordenadas de la KOBUKI.
+        if (s == ""){
+            current_sensor.header.frame_id = "/base_link"; // En coordenadas de la KOBUKI.
+            //ROS_ERROR("CamposSensores.cpp: current sensor : /base_link");
+        }else
+        {
+            current_sensor.header.frame_id = s+"_tf/base_link"; // En coordenadas de la KOBUKI.
+            //ROS_ERROR("CamposSensores.cpp: current sensor : %s", ("/"+s+"_tf/base_link").c_str());   
+        }
+        
         current_sensor.id = i;
         current_sensor.header.stamp = ros::Time::now();   // No caduca
         current_sensor.ns = "sensor";  
@@ -367,16 +378,34 @@ int main (int argc, char** argv)
 {
     // Iniciamos los componentes de ROS  
     ros::init(argc, argv, "collisions");
-    ros::NodeHandle n;
+    ros::NodeHandle n("~");
     ros::Rate r(20);
+    
+    if (!n.hasParam("robot_name"))
+    {
+        ROS_ERROR("CamposSensores.cpp: No param named 'robot_name'");
+        s = "";
+    }
+
+    if (n.getParam("robot_name", s))
+    {
+      ROS_ERROR("CamposSensores.cpp: Got param %s", s.c_str());
+    }
+    else
+    {
+      ROS_ERROR("CamposSensores.cpp: Failed to get param 'robot_name'");
+      s = "";
+    }
+
   
     // Los tópicos donde publicaremos.
     ros::Publisher sensor_marker = n.advertise<visualization_msgs::MarkerArray>("sensor_markers", 10);
     ros::Publisher vector_marker = n.advertise<visualization_msgs::Marker>("vector_marker", 10);
-    ros::Publisher nav_velocity_pub = n.advertise<geometry_msgs::Twist>("/mobile_base/commands/velocity", 1);
+    ros::Publisher nav_velocity_pub = n.advertise<geometry_msgs::Twist>("/HOLA/mobile_base/commands/velocity", 1);
     
-    // Los tópicos que escucharemos.
-    ros::Subscriber sub_odom = n.subscribe("/odom", 5, updateSensors);
+    ros::Subscriber sub_odom = n.subscribe(("/"+s+"/odom").c_str(), 5, updateSensors);
+    ROS_ERROR("CamposSensores.cpp: suscribed to: %s", ("/"+s+"/odom").c_str()); 
+    
     ros::Subscriber sub_map = n.subscribe("/occupancy_map", 5, getMapParams);
     ros::Subscriber nav_sub = n.subscribe("/a_star_goal", 1, nav_receiveNavGoal);
 

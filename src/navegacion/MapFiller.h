@@ -31,8 +31,10 @@ START   R----.        ----------------             |
 */
 
 /** Variables denotando las posiciones de los obstáculos en el mapa.*/ 
-const int WIDTH = 27;           // A lo largo del eje rojo x --- 15/0.3 = 4.5 mts
-const int HEIGHT = 30;          // A lo largo del eje verde y -- 18/0.3 = 5.4 mts  
+// const int WIDTH = (14+2)*2;           // A lo largo del eje rojo x --- 15/0.3 = 4.5 mts
+// const int HEIGHT = (8+2)*2;//30;//          // A lo largo del eje verde y -- 18/0.3 = 5.4 mts  
+const int WIDTH = 27;
+const int HEIGHT = 30;
 const float RESOLUTION = 0.2;   // metros/cuadro
 
 // Coordenadas del tamaño de la puerta.
@@ -65,11 +67,22 @@ int obstacle_count;
 
 
 /** 
- * Función encarfada de llenar el rectángulo que va de i1 a i2 y de j1 a j2, de 
- * manera inclusiva, con el valor value. 
- * Adicionalmente, si fill es verdadero, y value es 100, marca el 
- * rectángulo como un obstáculo cuyo identificador es un entero cuyo 
- * valor es value. 
+ * Función encargada de llenar el rectángulo 
+ * (agregar el obstaculo) que va de i1 a i2 y de j1 a j2, de 
+ * manera inclusiva, con el valor value.
+ * @param data arreglo con los valores necesarios para visualizar 
+ * cada cuadro del mundo.
+ * @param i1 cordenada x desde la que se empieza a "rellenar".
+ * @param j1 cordenada y desde la que se empieza a "rellenar".
+ * @param i2 cordenada x donde se termina de "rellenar".
+ * @param j2 cordenada y donde se termina de "rellenar".
+ * @param value valor que se le dará en el arreglo data a los cuadros en la zona 
+ * abarcada.
+ * @param obstacles Arreglo cuyos valores representan el id del obstaculo 
+ * que se va a agregar. 
+ * @param obstacle Identificador del obstaculo que se está agregando.
+ * @param fill Si es verdadero, y value es 100, marca el 
+ * rectángulo como un obstáculo. 
  */
 void fillRectangle(char* data, int i1, int j1, int i2, int j2, int value, int* obstacles, int obstacle, bool fill)
 {
@@ -81,7 +94,6 @@ void fillRectangle(char* data, int i1, int j1, int i2, int j2, int value, int* o
         data[j*WIDTH+i] = value;
       if (value == 100 && fill)
         obstacles[j*WIDTH + i] = obstacle;
-
     }
   }
 }
@@ -90,41 +102,174 @@ void fillRectangle(char* data, int i1, int j1, int i2, int j2, int value, int* o
  * Esta función tiene la misma semántica que fillRectangle, pero sólo llena un 
  * único cuadrado de la celda. 
  * Esto facilita la escritura para cuando tenemos obstáculos muy pequeños.
+ * @param data arreglo con los valores necesarios para visualizar 
+ * cada cuadro del mundo.
+ * @param i cordenada x del cuadro que se quiere rellenar.
+ * @param j cordenada y del cuadro que se quiere rellenar.
+ * @param value valor que se le dará en el arreglo data a los cuadros en la zona 
+ * abarcada.
+ * @param obstacles Arreglo cuyos valores representan el id del obstaculo 
+ * que se va a agregar. 
+ * @param obstacle Identificador del obstaculo que se está agregando.
+ * @param fill Si es verdadero, y value es 100, marca el 
+ * rectángulo como un obstáculo.
  */
 void fillOneRectangle(char* data, int i, int j, int value, int* obstacles, int obstacle, bool fill)
 {
   data[j*WIDTH+i] = value;
-  if (data[j*WIDTH+i] != 100)
-        data[j*WIDTH+i] = value;
+  // if (data[j*WIDTH+i] != 100)
+  //       data[j*WIDTH+i] = value;
   if (value == 100 && fill)
     obstacles[j*WIDTH + i] = obstacle;
 }
 
 /**
- * Función que llena la información del mapa
- * a excepción del vector con los valores de 
- * ocupación.
+ * Función que asigna las dimensiones 
+ * y resolución al objeto map.
+ * @param map Objeto de tipo OccupancyGrid
+ * el cual contiene la información del mundo.
+ * @param resolution valor de la resolución
+ * del mapa.
+ * @param width Tamaño del ancho del mapa
+ * en número de cuadros de tamaño resolution.
+ * @param height Tamaño de la altura del mapa
+ * en número de cuadros de tamaño resolution.
+ */
+void mapDimensions(nav_msgs::OccupancyGrid& map, float resolution, int width, int height){
+  map.info.resolution = resolution;     // [m/cell]
+  map.info.width = width;               // [cells]
+  map.info.height = height;             // [cells]
+}
+
+/**
+ * Función que asigna el punto de origen 
+ * al objeto map.
+ * @param map Objeto de tipo OccupancyGrid
+ * el cual contiene la información del mundo.
+ * @param x valor en el eje x del punto 
+ * de origen a asignar.
+ * @param y valor en el eje y del punto 
+ * de origen a asignar.
+ * @param z valor en el eje z del punto 
+ * de origen a asignar.
+ */
+void mapOrigin(nav_msgs::OccupancyGrid& map, float x, float y, float z){
+  double resolution = map.info.resolution;
+  map.info.origin.position.x = -resolution*x;
+  map.info.origin.position.y = -resolution*y;
+  map.info.origin.position.z = -resolution*z;
+}
+
+/**
+ * Función que asigna los valores de 
+ * orientación del origen 
+ * al objeto map.
+ * @param map Objeto de tipo OccupancyGrid
+ * el cual contiene la información del mundo.
+ * @param x valor en el eje x de la orientación 
+ * del origen a asignar.
+ * @param y valor en el eje y de la orientación 
+ * del origen a asignar.
+ * @param z valor en el eje de la orientación 
+ * del origen a asignar.
+ * @param w valor en el eje de la orientación 
+ * del origen a asignar.
+ */
+void mapOrientation(nav_msgs::OccupancyGrid& map, float x, float y, float z, float w){
+  map.info.origin.orientation.x = x;
+  map.info.origin.orientation.y = y;
+  map.info.origin.orientation.z = z;
+  map.info.origin.orientation.w = w;
+}
+
+/**
+ * Función que da valores al objeto map
+ * con la información default 
+ * del mapa que usaremos con los valores default
+ * para WIDTH, HEIGHT y RESOLUTION, además
+ * de una posición inicial, que se obtiene a
+ * partir de estas variables y DOOR_END, 
+ * valores necesarios para el ejemplo del
+ * aula de clases (el vector con los valores de 
+ * ocupación no se toca).
+ * @param map Objeto de tipo OccupancyGrid
+ * el cual contiene la información del mundo.
  */
 void mapHeader(nav_msgs::OccupancyGrid& map){
     // La información del mapa.
+    // map.header.frame_id = "/odom";
+    // map.header.stamp = ros::Time::now();   // No caduca
+    // map.info.resolution = RESOLUTION;     // [m/cell]
+    // map.info.width = WIDTH;               // [cells]
+    // map.info.height = HEIGHT;             // [cells]
+    // map.info.origin.position.x = -RESOLUTION*(WIDTH/2.0);
+    // map.info.origin.position.y = -RESOLUTION*(DOOR_END - 1);
+    // map.info.origin.position.z = 0;
+    // map.info.origin.orientation.x = 0.0;
+    // map.info.origin.orientation.y = 0.0;
+    // map.info.origin.orientation.z = 0.0;
+    // map.info.origin.orientation.w = 1.0;
+
+    // // La información del mapa.
     map.header.frame_id = "/odom";
     map.header.stamp = ros::Time::now();   // No caduca
-    map.info.resolution = RESOLUTION;     // [m/cell]
-    map.info.width = WIDTH;               // [cells]
-    map.info.height = HEIGHT;             // [cells]
-    map.info.origin.position.x = -RESOLUTION*(WIDTH/2.0);
-    map.info.origin.position.y = -RESOLUTION*(DOOR_END - 1);
-    map.info.origin.position.z = 0;
-    map.info.origin.orientation.x = 0.0;
-    map.info.origin.orientation.y = 0.0;
-    map.info.origin.orientation.z = 0.0;
-    map.info.origin.orientation.w = 1.0;
+    mapDimensions(map, RESOLUTION, WIDTH, HEIGHT);
+    mapOrigin(map, (WIDTH/2.0), (DOOR_END - 1), 0);
+    mapOrientation(map, 0.0, 0.0, 0.0, 1.0);
+}
+
+
+/**
+ * Función encargada de "colocar" las paredes del mapa.
+ * @param obstacles Arreglo de tipo int de tamaño size,
+ * cuyo valor representa el id del obstaculo
+ * al que pertenece.
+ * @param size Tamaño del area del mapa (un número entero
+ * para que cada unidad represente un "cuadro" de la cuadricula
+ * que representa al mapa).
+ * @returns data arreglo con los valores necesarios para visualizar 
+ * cada cuadro del mundo.
+ */ 
+void fillMapWalls(char* data, int* obstacles) 
+{
+  /* Agregamos la información de las paredes dandole un id de 
+  obstaculo a cada una
+  */
+  fillRectangle(data, 0, 0, WIDTH-1, 0, 100, obstacles, obstacle_count++, true);
+  fillRectangle(data, 0, 0, 0, HEIGHT-1, 100, obstacles, obstacle_count++, true);
+  fillRectangle(data, 0, HEIGHT-1, WIDTH-1, HEIGHT-1, 100, obstacles, obstacle_count++, true);
+  fillRectangle(data, WIDTH-1, 0, WIDTH-1, HEIGHT-1, 100, obstacles, obstacle_count++, true);
+  //fillRectangle(data, 0, DOOR_END+1, 0, HEIGHT-1, 100, obstacles, obstacle_count++, true);
+}
+
+/**
+ * Esta función tiene la misma semántica que fillRectangle, pero sólo llena un 
+ * único cuadrado de la celda. 
+ * Esto facilita la escritura para cuando tenemos obstáculos muy pequeños.
+ * @param data arreglo con los valores necesarios para visualizar 
+ * cada cuadro del mundo.
+ * @param i cordenada x del cuadro que se quiere rellenar.
+ * @param j cordenada y del cuadro que se quiere rellenar.
+ * @param obstacles Arreglo cuyos valores representan el id del obstaculo 
+ * que se va a agregar. 
+ */
+void addMachine(char* data, int i, int j, int* obstacles)
+{
+  fillRectangle(data, i, j, (i+1), (j+1), 100, obstacles, obstacle_count++, true);
+  fillRectangle(data, i, (WIDTH-j), (i+1), (WIDTH-j)-1, 100, obstacles, obstacle_count++, true);
 }
 
 /**
  * Función encargada de llenar la información del mapa, así como 
  * de poner los obstáculos en el grid correspondiente a cada una
  * de las mesas.
+ * @param obstacles Arreglo de tipo int de tamaño size,
+ * cuyo valor representa el id del obstaculo
+ * al que pertenece.
+ * @param size Tamaño del area del mapa (un número entero
+ * para que cada unidad represente un "cuadro" de la cuadricula
+ * que representa al mapa).
+ * @returns 
  */ 
 char* fillMap(int* obstacles, int size) 
 {  
@@ -135,7 +280,6 @@ char* fillMap(int* obstacles, int size)
     for(int i = 0; i < size; i++) {
         data[i] = 0;
     }
-  
   
     // Marcamos las paredes del salón
     fillRectangle(data, 0, 0, WIDTH-1, 0, 100, obstacles, obstacle_count++, true);
@@ -152,8 +296,8 @@ char* fillMap(int* obstacles, int size)
     fillOneRectangle(data, FRONT_TABLE_X_END, HEIGHT-2, 100, obstacles, obstacle_count++, true);
     
     //Patas de En Medio..
-    fillOneRectangle(data, (FRONT_TABLE_X_END)/2 + 1, FRONT_TABLE_Y_START, 100, obstacles, obstacle_count, true);
-    fillOneRectangle(data, (FRONT_TABLE_X_END)/2 + 1, HEIGHT-2, 100, obstacles, obstacle_count++, true);
+    //fillOneRectangle(data, (FRONT_TABLE_X_END)/2 + 1, FRONT_TABLE_Y_START, 100, obstacles, obstacle_count, true);
+    //fillOneRectangle(data, (FRONT_TABLE_X_END)/2 + 1, HEIGHT-2, 100, obstacles, obstacle_count++, true);
     
     // Llenamos las patas de la mesa en L
     fillOneRectangle(data, L_TABLE_X_START, L_TABLE_Y_START, 100, obstacles, obstacle_count, true);

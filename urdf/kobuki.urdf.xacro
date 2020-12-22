@@ -7,6 +7,7 @@
       kobuki_description/launch/view_model.launch
  -->
 <robot name="kobuki" xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- <arg name="init_pose"> -->
   <xacro:include filename="$(find hola_tortuga)/urdf/common_properties.urdf.xacro"/>
   <xacro:include filename="$(find hola_tortuga)/urdf/kobuki_gazebo.urdf.xacro"/>
 

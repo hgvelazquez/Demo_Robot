@@ -102,7 +102,7 @@ def get_target_move_up():
     return JOINT_OBJECTIVE
 
 def handle_move_arm(instruction):
-    if(instruction):
+    if(instruction.data):
         JOINT_TARGET = get_target_open_gripper()
         move_to_target(JOINT_TARGET)
         print("\nGarra abierta\n")

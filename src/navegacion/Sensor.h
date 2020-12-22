@@ -21,13 +21,20 @@ class Sensor {
     geometry_msgs::Point current_position;
     geometry_msgs::Point collision_point;
     float distance_detected;
-    bool collision;
+    // Se considera colición a un objeto a una distancia menor a un metro
+    bool collision;                          
     tf2::Quaternion angle_vector;
     tf2::Quaternion absolute_angle;
     float angle;
+    // Indica si el sensor es de los sensores frontales [45°,-45°]
     bool front;
     
-    // Calcula la distancia entre dos puntos.
+    /**
+     * Calcula la distancia euclidiana entre dos puntos en R2.
+     * @param p1 Punto inicial desde el cual se quiere medir la distancia.
+     * @param p2 Punto final al cual se quiere medir la distancia.
+     * @return Distancia del punto p1 al punto p2.
+     */
     float distance(geometry_msgs::Point p1, geometry_msgs::Point p2) {
         float sumx = (p1.x - p2.x)*(p1.x - p2.x);
         float sumy = (p1.y - p2.y)*(p1.y - p2.y); 
@@ -37,6 +44,7 @@ class Sensor {
     /**
      * Calcula el punto de colisión, actualiza la distancia
      * detectada y marca si estamos a menos de un metro o no. 
+     * @param map 
      */
     geometry_msgs::Point getEndPoint(nav_msgs::OccupancyGrid map)
     {

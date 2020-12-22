@@ -130,6 +130,8 @@ include_directories(
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
+#add_dependencies(hola_tortuga hola_tortuga_generate_messages_cpp)
+
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
@@ -141,12 +143,22 @@ include_directories(
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
 # set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
 
+
+           #################
+           ## Executables ##
+           #################
+
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 add_executable(map src/navegacion/occupancy_map.cpp)
 add_executable(campos src/navegacion/CamposSensores.cpp)
 add_executable(targets src/Objetivos.cpp)
 add_executable(motion_planner src/navegacion/motion_planner.cpp)
+
+## El ejecutable motion_planner depende de que se generen los mensajes
+## creados en el paquete hola_tortuga (mensaje del tipo Finished.msg)
+add_dependencies(motion_planner hola_tortuga_generate_messages_cpp)
+
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node
@@ -212,10 +224,14 @@ target_link_libraries(
   ${catkin_LIBRARIES}
 )
 
+## publica los objetivos del robot 
+## en la simulación se ven como esferas verdes traslucidas
 target_link_libraries(
   targets
   ${catkin_LIBRARIES}
 )
+
+
 target_link_libraries(
   motion_planner
   ${catkin_LIBRARIES}
@@ -225,3 +241,4 @@ target_link_libraries(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+

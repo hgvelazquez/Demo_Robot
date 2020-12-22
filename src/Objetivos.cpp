@@ -18,7 +18,7 @@ std::vector<double> grabbed;
 
 /**
  * Función que nos regresa el MarkerArray con la información para publicar
- * todas las mesas del mapa. 
+ * todos los objetivos en el mapa. 
  */
 visualization_msgs::MarkerArray addTargets() 
 {

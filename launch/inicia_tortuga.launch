@@ -1,18 +1,31 @@
 <launch>
-	<arg name="urdf_file" default="$(find xacro)/xacro.py '$(find hola_tortuga)/urdf/kobuki_standalone.urdf.xacro'" />
+<!-- Argumentos que recibe el archivo launch 
+ Si no se reciben argumentos al correr el arcihvo se toman los que están dados por dafault-->
+	<arg name="urdf_file" default="$(find xacro)/xacro '$(find hola_tortuga)/urdf/kobuki_standalone.urdf.xacro'" />
   <arg name="robot_name" default="" />
 
+
+  <!-- De define un parametro para ser fijado en el Servidor de parametros(Parameter Server)
+  se pueden poner valores o archivos -->
   <param name="robot_description" command="$(arg urdf_file)" />
 
+<!-- Inicia un nodo de tipo nodelet que se encuentra definido en el paquete nodelet
+  con el nombre mobile_base_nodelet_manager con el argumento de linea de comandos manager -->
   <node pkg="nodelet" type="nodelet" name="mobile_base_nodelet_manager" args="manager"/>
+
   <node pkg="nodelet" type="nodelet" name="mobile_base" args="load kobuki_softnode/SoftKobukiNodelet mobile_base_nodelet_manager">
     <rosparam file="$(find kobuki_softnode)/param/base.yaml" command="load"/>
     <remap from="mobile_base/odom" to="odom"/>
     <remap from="mobile_base/joint_states" to="joint_states"/>
   </node>
 
-  <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" >
+  <!-- <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" >
     <rosparam command="load" file="$(find kobuki_softnode)/param/diagnostics.yaml" />
+  </node> -->
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+    <param name="publish_frequency" type="double" value="30.0" />
+    <param name="~tf_prefix" value="$(arg robot_name)"/>
   </node>
 
   <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
@@ -20,18 +33,17 @@
     <param name="~tf_prefix" value="$(arg robot_name)"/>
 	</node>
 
-  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
-    <param name="publish_frequency" type="double" value="30.0" />
-    <param name="~tf_prefix" value="$(arg robot_name)"/>
-  </node>
-
 	<arg name="rvizconfig" default="$(find hola_tortuga)/rviz/hola_tortuga.rviz" />
 
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
 	
+  <!-- Mapa con obstaculos y camino -->
 	<node pkg="hola_tortuga" type="map" name="mapa_tortuga" ></node>
+  <!-- Sensores del robot para evitar obstaculos -->
   <node pkg="hola_tortuga" type="campos" name="campos_tortuga" ></node>
-  <node pkg="hola_tortuga" type="targets" name="objetivos_tortuga" ></node>
+  <node pkg="hola_tortuga" type="targets" name="objetivos_tortuga" >
+    <!-- <remap from="/base_link" to="robot_1_tf/base_link"/> -->
+  </node>
   <!-- <node pkg="hola_tortuga" type="Mover_Brazo.py" name="mover_brazo_tortuga" output="screen"></node> -->
   
   <node pkg="hola_tortuga" type="motion_planner" name="motion_planner_tortuga" >

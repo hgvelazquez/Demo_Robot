@@ -1,0 +1,6 @@
+<launch>
+    <group ns="group1">
+        <node pkg="hola_tortuga" type="Mover_Brazo.py" name="mover_brazo_tortuga" output="screen"></node>
+    </group>
+</launch>
+

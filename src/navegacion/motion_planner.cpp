@@ -50,6 +50,10 @@ bool reached_last;                  /* Nos dice si ya llegamos a la última inte
 // Variable que nos indica que ya tenemos la información del mapa y podemos dejar de ecuchar.  
 bool received_map;  
 
+// Variable que utilizamos para obtener los parametros
+std::string s;
+
+
 /** 
  * Función callback para el tópico del mapa. 
  * En cuanto ha recibido un mapa válido, lo anuncia con
@@ -118,6 +122,7 @@ void updatePoint(const nav_msgs::Odometry::ConstPtr& msg){
  */
 void receiveNavGoal(const geometry_msgs::PoseStamped& poseStamped)
 {
+  ROS_ERROR("motion_planner.cpp receivedGoal");
   // Sacamos el ancho para escribirlo más fácilmente.
   int WIDTH = MAP.info.width;
   
@@ -127,15 +132,18 @@ void receiveNavGoal(const geometry_msgs::PoseStamped& poseStamped)
   // Obtenemos la celda en la que se encuentra la KOBUKI.
   int u = floor((kob_pose.position.x - origin_x)/0.2);
   int w = floor((kob_pose.position.y - origin_y)/0.2);
-  printf("YOU ARE AT: %d, %d\n", u, w);
+  printf("printf: YOU ARE AT: %d, %d\n", u, w);
+  ROS_ERROR("YOU ARE AT: %d, %d\n", u, w);
   
   // Obtenemos la celda a la que queremos llegar. 
   int x = floor((goal.x - origin_x)/0.2);
   int y = floor((goal.y - origin_y)/0.2);
+  ROS_ERROR("GOING TO : %d, %d\n", x, y);
   
   // Obtenemos los vértices más cerecanos a ambas celdas.
   Vertice* inic = nearest_voronoi[u + w*WIDTH];
   Vertice* fin = nearest_voronoi[x + y*WIDTH];
+  ROS_ERROR("after vertices");
   
   
   printf("INIC: %d, %d\n", inic->x, inic->y);
@@ -144,9 +152,11 @@ void receiveNavGoal(const geometry_msgs::PoseStamped& poseStamped)
   printf("%2.3f, %2.3f\n", getPoint(fin).x, getPoint(fin).y);
   // Obtenemos la ruta en la gráfica con A*.
   std::stack<Vertice*> a = AStar(VORONOI_GRAPH, inic, fin); 
+  ROS_ERROR("after astar");
   a_star_route = a;
   next = getPoint(a_star_route.top());
   printf("NEXT: %d, %d\n", a_star_route.top()->x, a_star_route.top()->y);
+  ROS_ERROR("NEXT: %d, %d\n", a_star_route.top()->x, a_star_route.top()->y);
   almost = false;
   reached_last = false;
   turn = 0;
@@ -371,8 +381,8 @@ geometry_msgs::Twist rotate()
     // Pasamos el goal al marco de la KOBUKI.
     geometry_msgs::Point goal_coord;
     // Trasladamos.
-    goal_coord.x = goal.x -  kob_pose.position.x;
-    goal_coord.y = goal.y -  kob_pose.position.y;
+    goal_coord.x = goal.x - kob_pose.position.x;
+    goal_coord.y = goal.y - kob_pose.position.y;
     // Rotamos.
     tf2::Quaternion g(goal_coord.x, goal_coord.y, 0, 0);
     g = inverse(v1)*g*v1;
@@ -398,16 +408,34 @@ int main( int argc, char** argv )
 {
   
     ros::init(argc, argv, "motion_planner");
-    ros::NodeHandle n;
+    ros::NodeHandle n("~");
     ros::Rate r(10);
+
+    if (!n.hasParam("robot_name"))
+    {
+        ROS_ERROR("Motion_planner.cpp: No param named 'robot_name'");
+    }
+
+    if (n.getParam("robot_name", s))
+    {
+      ROS_ERROR("Motion_planner.cpp: Got param: %s", s.c_str());
+    }
+    else
+    {
+      ROS_ERROR("Motion_planner.cpp: Failed to get param 'robot_name'");
+    }
     
     // Tópicos donde publicaremos.
     ros::Publisher a_star_pub = n.advertise<geometry_msgs::Point>("a_star_goal", 5);
-    ros::Publisher rotate_pub = n.advertise<geometry_msgs::Twist>("/mobile_base/commands/velocity", 1);
+    ros::Publisher rotate_pub = n.advertise<geometry_msgs::Twist>("/HOLA/mobile_base/commands/velocity", 1);
     ros::Publisher finished_pub = n.advertise<hola_tortuga::Finished>("demo_finished", 5);
+    
     // Tópicos donde escucharemos.
-    ros::Subscriber nav_sub = n.subscribe("/move_base_simple/goal", 5, receiveNavGoal);
-    ros::Subscriber odom_sub = n.subscribe("/odom", 5, updatePoint);
+    ros::Subscriber nav_sub = n.subscribe(("/"+s+"/move_base_simple/goal").c_str(), 5, receiveNavGoal);
+    ROS_ERROR("Motion_planer.cpp: suscribed to: %s", ("/"+s+"/move_base_simple/goal").c_str());
+    ros::Subscriber odom_sub = n.subscribe(("/"+s+"/odom").c_str(), 5, updatePoint);
+    ROS_ERROR("Motion_planer.cpp: suscribed to: %s", ("/"+s+"/odom").c_str());
+    
     ros::Subscriber map_sub = n.subscribe("/voronoi_info", 5, getMapParams);
   
   

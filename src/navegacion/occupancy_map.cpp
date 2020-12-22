@@ -50,11 +50,11 @@ void processCell(Celda& p, char* data, int o, int d,
 /**
  * Función que se encarga de la construcción completa de la gráfica de 
  * voronoi. 
- * Recibe la información de los obstáculos del arreglo data, 
- * El booleano manhattan nos dice si expandimos con vecindad manhattan o de
+ * @param data Contiene la información de los obstáculos.
+ * @param manhattan Nos dice si expandimos con vecindad manhattan o de
  * 8 vecinos.
- * El arreglo de obstáculos nos dice a qué obstáculo pertenecen las 
- * celdas llenas con OBSTACULO en data.
+ * @param obstacles Arreglo de obstáculos nos dice a qué obstáculo pertenecen las 
+ * celdas llenas identificadas como OBSTACULO en data.
  * Regresa un vector con las celdas que están en la gráfica de voronoi
  * (incluyendo aristas). Modifica las variables globales GRAPH, en donde se 
  * guardan las celdas que son los nodos de Voronoi y más importantemente, 
@@ -166,23 +166,57 @@ int main( int argc, char** argv )
     nav_msgs::OccupancyGrid map_for_vor;
     visualization_msgs::MarkerArray tables;
     
-    /* Llenamos la información de los mapas.*/
+    /* Llenamos la información básica 
+    (todavía no se consideran los obstaculos) 
+    de los mapas con los valores por default.*/
     mapHeader(map);
     mapHeader(map_for_vor);
+
+            //Necesito 14 en x 8 en y
+    mapDimensions(map, RESOLUTION, WIDTH, HEIGHT);
+    mapDimensions(map_for_vor, RESOLUTION, WIDTH, HEIGHT);
+    mapOrigin(map, WIDTH/2, (DOOR_END - 1), 0);
+    mapOrigin(map_for_vor, WIDTH/2, (DOOR_END - 1), 0);
+    mapOrientation(map, 0.0, 0, 0, 1);   
+    mapOrientation(map_for_vor, 0.0, 0, 0, 1);
+
+
+    /* Adaptar la función para que solo reciba 
+    el ancho y alto sin el factor de la resolución.
+    Resolución tentativa .5
+    */ 
     
+    /* Creamos y llenamos con ceros el vector 
+    de obstaculos para nuestos mapas.    
+    */
     int size = WIDTH * HEIGHT;
     int* obstacles = new int[size];
   
     for(int i = 0; i < size; i++)
         obstacles[i] = 0;
     
-    /* Llenmos la información de los obstáculos en el mapa original. */
+    /* Llenamos la información de los obstáculos en el mapa original. */
     char* data = fillMap(obstacles, size);
+
+    // char* data = new char[size];
+    char* data_for_vor = new char[size];
+
+    // for(int i = 0; i < size; i++) {
+    //     data[i] = 0;
+    //     data_for_vor[i] = 0;
+    // }
+    // fillMapWalls(data, obstacles);
+    // fillMapWalls(data_for_vor, obstacles);
+    
     /* Copiamos esa información para el de la información de Voronoi. 
      * deben ser distintos pues el valor de relleno toma una interpretación
      * distinta en general.
      */
-    char* data_for_vor = fillMap(obstacles, size);
+    
+    data_for_vor = fillMap(obstacles, size);
+
+    //addMachine(data_for_vor, 3, 2, obstacles);
+    //addMachine(data, 3, 2, obstacles);
     
     /* Llenamos las celdas aristas en el mapa de voronoi y para visualizar.*/
     std::vector<int> voronoi_squares = voronoi(data, false, obstacles);

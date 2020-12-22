@@ -1,0 +1,475 @@
+<launch>
+
+    <group ns="group1">
+        <!-- Argumentos que recibe el archivo launch 
+        Si no se reciben argumentos al correr el arcihvo se toman los que están dados por default-->
+        <arg name="urdf_file" default="$(find xacro)/xacro '$(find hola_tortuga)/urdf/kobuki_standalone.urdf.xacro'" />
+        <arg name="robot_name" default="robot_1" />
+
+        <!-- De define un parametro para ser fijado en el Servidor de parametros(Parameter Server)
+        se pueden poner valores o archivos -->
+        <param name="robot_description" command="$(arg urdf_file)" />
+
+        <!-- Inicia un nodo de tipo nodelet que se encuentra definido en el paquete nodelet
+        con el nombre mobile_base_nodelet_manager con el argumento de linea de comandos manager -->
+        <node pkg="nodelet" type="nodelet" name="mobile_base_nodelet_manager" args="manager"/>
+
+        <node pkg="nodelet" type="nodelet" name="mobile_base" args="load kobuki_softnode/SoftKobukiNodelet mobile_base_nodelet_manager">
+            <!-- 
+            <remap from="mobile_base/odom" to="odom"/>
+            <remap from="mobile_base/joint_states" to="joint_states"/>
+            <remap from="mobile_base_simple/goal" to="/$(arg robot_name)/goal"/> -->
+            
+            <rosparam file="$(find kobuki_softnode)/param/base.yaml" command="load"/>
+            <param name="base_frame" type="string"  value="$(arg robot_name)_tf/base_footprint"/>
+            <remap from="mobile_base/odom" to="/$(arg robot_name)/odom"/>
+            <!-- <remap from="mobile_base/commands/velocity" to="/$(arg robot_name)/mobile_base/commands/velocity"/> -->
+
+            <remap from="mobile_base/enable" to="enable"/>
+            <remap from="mobile_base/disable" to="disable"/>
+            <remap from="mobile_base/joint_states" to="/$(arg robot_name)/joint_states"/> 
+        </node>
+
+        <!-- <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" >
+            <rosparam command="load" file="$(find kobuki_softnode)/param/diagnostics.yaml" />
+        </node> -->
+
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+            <param name="publish_frequency" type="double" value="30.0" />
+            <param name="tf_prefix" value="$(arg robot_name)_tf"/>
+        </node>
+
+        <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
+            <rosparam param="source_list">["joint_states_interpolated"]</rosparam>
+            <param name="publish_frequency" type="double" value="30.0" />
+            <param name="tf_prefix" type="string" value="$(arg robot_name)_tf"/>
+        </node>
+
+
+        <!-- 
+            SENSORES 
+            Publica los marcadores de los sensores a rviz y los actualiza lo cual es necesario para 
+            la navegación.
+        
+            Publica intrucciones a /robot_1/mobile_base/commands/velocity instruciones de a donde moverse
+        -->
+        <node pkg="hola_tortuga" type="campos" name="campos_tortuga" >
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
+            <remap from="/a_star_goal" to="motion/a_star_goal"/>
+        </node>
+        <!-- 
+            NAVEGACIÓN 
+            Publica intrucciones a /robot_1/mobile_base/commands/velocity instruciones de a donde moverse
+
+            Publica cuando llega a su robot_description
+
+            Se suscribe a /robot_1/move_base_simple/goal para saber a donde ir
+
+            Se suscribe /robot_1/odom para saber la posición actual de robot_1 
+        -->
+        <node pkg="hola_tortuga" type="motion_planner" name="motion">
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
+        </node>
+
+        <!-- <node pkg="hola_tortuga" type="plan.py" name="plan_tortuga" output="screen">
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="demo_finished" to="motion/demo_finished"/>
+        </node>        -->
+
+    </group>
+
+    <group ns="group2">
+        <!-- Argumentos que recibe el archivo launch 
+        Si no se reciben argumentos al correr el arcihvo se toman los que están dados por dafault-->
+        <arg name="urdf_file" default="$(find xacro)/xacro '$(find hola_tortuga)/urdf/kobuki_standalone.urdf.xacro'" />
+        <arg name="robot_name" default="robot_2" />
+
+        <!-- De define un parametro para ser fijado en el Servidor de parametros(Parameter Server)
+        se pueden poner valores o archivos -->
+        <param name="robot_description" command="$(arg urdf_file)" />
+
+        <!-- Inicia un nodo de tipo nodelet que se encuentra definido en el paquete nodelet
+        con el nombre mobile_base_nodelet_manager con el argumento de linea de comandos manager -->
+        <node pkg="nodelet" type="nodelet" name="mobile_base_nodelet_manager" args="manager"/>
+
+        <node pkg="nodelet" type="nodelet" name="mobile_base" args="load kobuki_softnode/SoftKobukiNodelet mobile_base_nodelet_manager">
+            <!-- 
+            <remap from="mobile_base/odom" to="odom"/>
+            <remap from="mobile_base/joint_states" to="joint_states"/> -->
+            
+            <rosparam file="$(find kobuki_softnode)/param/base.yaml" command="load"/>
+            <param name="base_frame" type="string"  value="$(arg robot_name)_tf/base_footprint"/>
+            <remap from="mobile_base/odom" to="/$(arg robot_name)/odom"/>
+            
+            <remap from="mobile_base/enable" to="enable"/>
+            <remap from="mobile_base/disable" to="disable"/>
+            <remap from="mobile_base/joint_states" to="/$(arg robot_name)/joint_states"/> 
+        </node>
+
+        <!-- <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" >
+            <rosparam command="load" file="$(find kobuki_softnode)/param/diagnostics.yaml" />
+        </node> -->
+
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+            <param name="publish_frequency" type="double" value="30.0" />
+            <param name="tf_prefix" value="$(arg robot_name)_tf"/>
+        </node>
+
+        <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
+            <rosparam param="source_list">["joint_states_interpolated"]</rosparam>
+            <param name="publish_frequency" type="double" value="30.0" />
+            <param name="tf_prefix" type="string" value="$(arg robot_name)_tf"/>
+        </node>
+        <!-- 
+            SENSORES 
+            Publica los marcadores de los sensores a rviz y los actualiza lo cual es necesario para 
+            la navegación.
+        
+            Publica intrucciones a /robot_2/mobile_base/commands/velocity instruciones de a donde moverse
+        -->
+        <node pkg="hola_tortuga" type="campos" name="campos_tortuga" >
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
+            <remap from="/a_star_goal" to="motion/a_star_goal"/>
+        </node>
+        <!-- 
+            NAVEGACIÓN 
+            Publica intrucciones a /robot_1/mobile_base/commands/velocity instruciones de a donde moverse
+
+            Publica cuando llega a su robot_description
+
+            Se suscribe a /robot_1/move_base_simple/goal para saber a donde ir
+
+            Se suscribe /robot_1/odom para saber la posición actual de robot_1 
+        -->
+        <node pkg="hola_tortuga" type="motion_planner" name="motion">
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
+        </node>
+
+        <!-- <node pkg="hola_tortuga" type="plan.py" name="plan_tortuga" output="screen">
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="demo_finished" to="motion/demo_finished"/>
+        </node> -->
+
+    </group>
+
+    <group ns="group3">
+        <!-- Argumentos que recibe el archivo launch 
+        Si no se reciben argumentos al correr el arcihvo se toman los que están dados por dafault-->
+        <arg name="urdf_file" default="$(find xacro)/xacro '$(find hola_tortuga)/urdf/kobuki_standalone.urdf.xacro'" />
+        <arg name="robot_name" default="robot_3" />
+
+        <!-- De define un parametro para ser fijado en el Servidor de parametros(Parameter Server)
+        se pueden poner valores o archivos -->
+        <param name="robot_description" command="$(arg urdf_file)" />
+
+        <!-- Inicia un nodo de tipo nodelet que se encuentra definido en el paquete nodelet
+        con el nombre mobile_base_nodelet_manager con el argumento de linea de comandos manager -->
+        <node pkg="nodelet" type="nodelet" name="mobile_base_nodelet_manager" args="manager"/>
+
+        <node pkg="nodelet" type="nodelet" name="mobile_base" args="load kobuki_softnode/SoftKobukiNodelet mobile_base_nodelet_manager">
+            <!-- 
+            <remap from="mobile_base/odom" to="odom"/>
+            <remap from="mobile_base/joint_states" to="joint_states"/> -->
+            
+            <rosparam file="$(find kobuki_softnode)/param/base.yaml" command="load"/>
+            <param name="base_frame" type="string"  value="$(arg robot_name)_tf/base_footprint"/>
+            <remap from="mobile_base/odom" to="/$(arg robot_name)/odom"/>
+            
+            <remap from="mobile_base/enable" to="enable"/>
+            <remap from="mobile_base/disable" to="disable"/>
+            <remap from="mobile_base/joint_states" to="/$(arg robot_name)/joint_states"/> 
+        </node>
+
+        <!-- <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" >
+            <rosparam command="load" file="$(find kobuki_softnode)/param/diagnostics.yaml" />
+        </node> -->
+
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+            <param name="publish_frequency" type="double" value="30.0" />
+            <param name="tf_prefix" value="$(arg robot_name)_tf"/>
+        </node>
+
+        <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
+            <rosparam param="source_list">["joint_states_interpolated"]</rosparam>
+            <param name="publish_frequency" type="double" value="30.0" />
+            <param name="tf_prefix" type="string" value="$(arg robot_name)_tf"/>
+        </node>
+        <!-- 
+            SENSORES 
+            Publica los marcadores de los sensores a rviz y los actualiza lo cual es necesario para 
+            la navegación.
+        
+            Publica intrucciones a /robot_2/mobile_base/commands/velocity instruciones de a donde moverse
+        -->
+        <node pkg="hola_tortuga" type="campos" name="campos_tortuga" >
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
+            <remap from="/a_star_goal" to="motion/a_star_goal"/>
+        </node>
+        <!-- 
+            NAVEGACIÓN 
+            Publica intrucciones a /robot_1/mobile_base/commands/velocity instruciones de a donde moverse
+
+            Publica cuando llega a su robot_description
+
+            Se suscribe a /robot_1/move_base_simple/goal para saber a donde ir
+
+            Se suscribe /robot_1/odom para saber la posición actual de robot_1 
+        -->
+        <node pkg="hola_tortuga" type="motion_planner" name="motion">
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
+        </node>
+
+        <!-- <node pkg="hola_tortuga" type="plan.py" name="plan_tortuga" output="screen">
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="demo_finished" to="motion/demo_finished"/>
+        </node> -->
+
+    </group>
+
+    <group ns="group4">
+        <!-- Argumentos que recibe el archivo launch 
+        Si no se reciben argumentos al correr el arcihvo se toman los que están dados por dafault-->
+        <arg name="urdf_file" default="$(find xacro)/xacro '$(find hola_tortuga)/urdf/kobuki_standalone.urdf.xacro'" />
+        <arg name="robot_name" default="robot_4" />
+
+        <!-- De define un parametro para ser fijado en el Servidor de parametros(Parameter Server)
+        se pueden poner valores o archivos -->
+        <param name="robot_description" command="$(arg urdf_file)" />
+
+        <!-- Inicia un nodo de tipo nodelet que se encuentra definido en el paquete nodelet
+        con el nombre mobile_base_nodelet_manager con el argumento de linea de comandos manager -->
+        <node pkg="nodelet" type="nodelet" name="mobile_base_nodelet_manager" args="manager"/>
+
+        <node pkg="nodelet" type="nodelet" name="mobile_base" args="load kobuki_softnode/SoftKobukiNodelet mobile_base_nodelet_manager">
+            <!-- 
+            <remap from="mobile_base/odom" to="odom"/>
+            <remap from="mobile_base/joint_states" to="joint_states"/> -->
+            
+            <rosparam file="$(find kobuki_softnode)/param/base.yaml" command="load"/>
+            <param name="base_frame" type="string"  value="$(arg robot_name)_tf/base_footprint"/>
+            <remap from="mobile_base/odom" to="/$(arg robot_name)/odom"/>
+            
+            <remap from="mobile_base/enable" to="enable"/>
+            <remap from="mobile_base/disable" to="disable"/>
+            <remap from="mobile_base/joint_states" to="/$(arg robot_name)/joint_states"/> 
+        </node>
+
+        <!-- <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" >
+            <rosparam command="load" file="$(find kobuki_softnode)/param/diagnostics.yaml" />
+        </node> -->
+
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+            <param name="publish_frequency" type="double" value="30.0" />
+            <param name="tf_prefix" value="$(arg robot_name)_tf"/>
+        </node>
+
+        <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
+            <rosparam param="source_list">["joint_states_interpolated"]</rosparam>
+            <param name="publish_frequency" type="double" value="30.0" />
+            <param name="tf_prefix" type="string" value="$(arg robot_name)_tf"/>
+        </node>
+        <!-- 
+            SENSORES 
+            Publica los marcadores de los sensores a rviz y los actualiza lo cual es necesario para 
+            la navegación.
+        
+            Publica intrucciones a /robot_2/mobile_base/commands/velocity instruciones de a donde moverse
+        -->
+        <node pkg="hola_tortuga" type="campos" name="campos_tortuga" >
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
+            <remap from="/a_star_goal" to="motion/a_star_goal"/>
+        </node>
+        <!-- 
+            NAVEGACIÓN 
+            Publica intrucciones a /robot_1/mobile_base/commands/velocity instruciones de a donde moverse
+
+            Publica cuando llega a su robot_description
+
+            Se suscribe a /robot_1/move_base_simple/goal para saber a donde ir
+
+            Se suscribe /robot_1/odom para saber la posición actual de robot_1 
+        -->
+        <node pkg="hola_tortuga" type="motion_planner" name="motion">
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
+        </node>
+
+        <!-- <node pkg="hola_tortuga" type="plan.py" name="plan_tortuga" output="screen">
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="demo_finished" to="motion/demo_finished"/>
+        </node> -->
+
+    </group>
+
+    <group ns="group5">
+        <!-- Argumentos que recibe el archivo launch 
+        Si no se reciben argumentos al correr el arcihvo se toman los que están dados por dafault-->
+        <arg name="urdf_file" default="$(find xacro)/xacro '$(find hola_tortuga)/urdf/kobuki_standalone.urdf.xacro'" />
+        <arg name="robot_name" default="robot_5" />
+
+        <!-- De define un parametro para ser fijado en el Servidor de parametros(Parameter Server)
+        se pueden poner valores o archivos -->
+        <param name="robot_description" command="$(arg urdf_file)" />
+
+        <!-- Inicia un nodo de tipo nodelet que se encuentra definido en el paquete nodelet
+        con el nombre mobile_base_nodelet_manager con el argumento de linea de comandos manager -->
+        <node pkg="nodelet" type="nodelet" name="mobile_base_nodelet_manager" args="manager"/>
+
+        <node pkg="nodelet" type="nodelet" name="mobile_base" args="load kobuki_softnode/SoftKobukiNodelet mobile_base_nodelet_manager">
+            <!-- 
+            <remap from="mobile_base/odom" to="odom"/>
+            <remap from="mobile_base/joint_states" to="joint_states"/> -->
+            
+            <rosparam file="$(find kobuki_softnode)/param/base.yaml" command="load"/>
+            <param name="base_frame" type="string"  value="$(arg robot_name)_tf/base_footprint"/>
+            <remap from="mobile_base/odom" to="/$(arg robot_name)/odom"/>
+            
+            <remap from="mobile_base/enable" to="enable"/>
+            <remap from="mobile_base/disable" to="disable"/>
+            <remap from="mobile_base/joint_states" to="/$(arg robot_name)/joint_states"/> 
+        </node>
+
+        <!-- <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" >
+            <rosparam command="load" file="$(find kobuki_softnode)/param/diagnostics.yaml" />
+        </node> -->
+
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+            <param name="publish_frequency" type="double" value="30.0" />
+            <param name="tf_prefix" value="$(arg robot_name)_tf"/>
+        </node>
+
+        <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
+            <rosparam param="source_list">["joint_states_interpolated"]</rosparam>
+            <param name="publish_frequency" type="double" value="30.0" />
+            <param name="tf_prefix" type="string" value="$(arg robot_name)_tf"/>
+        </node>
+        <!-- 
+            SENSORES 
+            Publica los marcadores de los sensores a rviz y los actualiza lo cual es necesario para 
+            la navegación.
+        
+            Publica intrucciones a /robot_2/mobile_base/commands/velocity instruciones de a donde moverse
+        -->
+        <node pkg="hola_tortuga" type="campos" name="campos_tortuga" >
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
+            <remap from="/a_star_goal" to="motion/a_star_goal"/>
+        </node>
+        <!-- 
+            NAVEGACIÓN 
+            Publica intrucciones a /robot_1/mobile_base/commands/velocity instruciones de a donde moverse
+
+            Publica cuando llega a su robot_description
+
+            Se suscribe a /robot_1/move_base_simple/goal para saber a donde ir
+
+            Se suscribe /robot_1/odom para saber la posición actual de robot_1 
+        -->
+        <node pkg="hola_tortuga" type="motion_planner" name="motion">
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
+        </node>
+
+        <!-- <node pkg="hola_tortuga" type="plan.py" name="plan_tortuga" output="screen">
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="demo_finished" to="motion/demo_finished"/>
+        </node> -->
+
+    </group>
+
+    <group ns="group6">
+        <!-- Argumentos que recibe el archivo launch 
+        Si no se reciben argumentos al correr el arcihvo se toman los que están dados por dafault-->
+        <arg name="urdf_file" default="$(find xacro)/xacro '$(find hola_tortuga)/urdf/kobuki_standalone.urdf.xacro'" />
+        <arg name="robot_name" default="robot_6" />
+
+        <!-- De define un parametro para ser fijado en el Servidor de parametros(Parameter Server)
+        se pueden poner valores o archivos -->
+        <param name="robot_description" command="$(arg urdf_file)" />
+
+        <!-- Inicia un nodo de tipo nodelet que se encuentra definido en el paquete nodelet
+        con el nombre mobile_base_nodelet_manager con el argumento de linea de comandos manager -->
+        <node pkg="nodelet" type="nodelet" name="mobile_base_nodelet_manager" args="manager"/>
+
+        <node pkg="nodelet" type="nodelet" name="mobile_base" args="load kobuki_softnode/SoftKobukiNodelet mobile_base_nodelet_manager">
+            <!-- 
+            <remap from="mobile_base/odom" to="odom"/>
+            <remap from="mobile_base/joint_states" to="joint_states"/> -->
+            
+            <rosparam file="$(find kobuki_softnode)/param/base.yaml" command="load"/>
+            <param name="base_frame" type="string"  value="$(arg robot_name)_tf/base_footprint"/>
+            <remap from="mobile_base/odom" to="/$(arg robot_name)/odom"/>
+            
+            <remap from="mobile_base/enable" to="enable"/>
+            <remap from="mobile_base/disable" to="disable"/>
+            <remap from="mobile_base/joint_states" to="/$(arg robot_name)/joint_states"/> 
+        </node>
+
+        <!-- <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" >
+            <rosparam command="load" file="$(find kobuki_softnode)/param/diagnostics.yaml" />
+        </node> -->
+
+        <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+            <param name="publish_frequency" type="double" value="30.0" />
+            <param name="tf_prefix" value="$(arg robot_name)_tf"/>
+        </node>
+
+        <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
+            <rosparam param="source_list">["joint_states_interpolated"]</rosparam>
+            <param name="publish_frequency" type="double" value="30.0" />
+            <param name="tf_prefix" type="string" value="$(arg robot_name)_tf"/>
+        </node>
+        <!-- 
+            SENSORES 
+            Publica los marcadores de los sensores a rviz y los actualiza lo cual es necesario para 
+            la navegación.
+        
+            Publica intrucciones a /robot_2/mobile_base/commands/velocity instruciones de a donde moverse
+        -->
+        <node pkg="hola_tortuga" type="campos" name="campos_tortuga" >
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
+            <remap from="/a_star_goal" to="motion/a_star_goal"/>
+        </node>
+        <!-- 
+            NAVEGACIÓN 
+            Publica intrucciones a /robot_1/mobile_base/commands/velocity instruciones de a donde moverse
+
+            Publica cuando llega a su robot_description
+
+            Se suscribe a /robot_1/move_base_simple/goal para saber a donde ir
+
+            Se suscribe /robot_1/odom para saber la posición actual de robot_1 
+        -->
+        <node pkg="hola_tortuga" type="motion_planner" name="motion">
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
+        </node>
+
+        <!-- <node pkg="hola_tortuga" type="plan.py" name="plan_tortuga" output="screen">
+            <param name="robot_name" type="string" value="$(arg robot_name)"/>
+            <remap from="demo_finished" to="motion/demo_finished"/>
+        </node> -->
+
+    </group>
+    
+
+	<arg name="rvizconfig" default="$(find hola_tortuga)/rviz/hola_tortugas.rviz" />
+
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
+	
+	<node pkg="hola_tortuga" type="map" name="mapa_tortuga" ></node>
+    <!-- <node pkg="hola_tortuga" type="targets" name="objetivos_tortuga" ></node> -->
+    
+    <!-- <node pkg="hola_tortuga" type="Mover_Brazo.py" name="mover_brazo_tortuga" output="screen"></node>
+     -->
+   
+ 
+</launch>
