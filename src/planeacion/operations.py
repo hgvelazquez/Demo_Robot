@@ -80,8 +80,8 @@ def finishedCallback_rb6(msg):
 def move_robot(goal_publisher,x,y):
     # Notificamos a la navegación la ubicación objetivo
     nav_goal = PoseStamped()
-    nav_goal.pose.position.x = -RESOLUTION*x
-    nav_goal.pose.position.y = -RESOLUTION*y
+    nav_goal.pose.position.x = RESOLUTION*x
+    nav_goal.pose.position.y = RESOLUTION*y
     goal_publisher.publish(nav_goal)
     time.sleep(.2)
     print("go to\n\n"+str(nav_goal))
@@ -151,8 +151,8 @@ if __name__ == "__main__":
         
         global RESOLUTION
 
-        move_robot(goal_publisher_rb1,1,5)
-        move_robot(goal_publisher_rb2,5,1)
+        move_robot(goal_publisher_rb1,2,1)
+        move_robot(goal_publisher_rb2,0,2)
         # move_robot(goal_publisher_rb3,-5,-12)
         # move_robot(goal_publisher_rb4,10,-5)
         # move_robot(goal_publisher_rb5,-2,-5)

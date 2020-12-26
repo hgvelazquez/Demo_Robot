@@ -18,6 +18,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
 #include "Sensor.h"
+#include "MapFiller.h"
 
 #define _USE_MATH_DEFINES
 
@@ -174,9 +175,11 @@ geometry_msgs::Twist navigate() {
             end.y = SENSORS[i].distance_detected*sin(angle);
             // Frontera a partir de la cual contamos las colisiones.
             // Será el punto puesto en la orilla de la KOBUKI. (rcost, rsent)
-            actual.x = 0.2*cos(SENSORS[i].angle); 
-            actual.y = 0.2*sin(SENSORS[i].angle);
+            actual.x = RESOLUTION*cos(SENSORS[i].angle); 
+            actual.y = RESOLUTION*sin(SENSORS[i].angle);
           
+            // Posible error por el 0.2 en lugar de resolution
+            // aunque no sé a que se deba ese valor
             float nav_d = SENSORS[i].distance_detected - 0.2; // Movemos los sensores a la orilla de la KOBUKI.
             if (nav_d < min && SENSORS[i].front) {
                 min = nav_d;

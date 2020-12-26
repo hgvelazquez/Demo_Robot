@@ -30,12 +30,23 @@ START   R----.        ----------------             |
 (0,0)   --------------------BOARD------------------- (WIDTH, 0)
 */
 
-/** Variables denotando las posiciones de los obstáculos en el mapa.*/ 
-// const int WIDTH = (14+2)*2;           // A lo largo del eje rojo x --- 15/0.3 = 4.5 mts
-// const int HEIGHT = (8+2)*2;//30;//          // A lo largo del eje verde y -- 18/0.3 = 5.4 mts  
-const int WIDTH = 27;
-const int HEIGHT = 30;
+#include <tf2/LinearMath/Quaternion.h>
+
+
 const float RESOLUTION = 0.2;   // metros/cuadro
+/** Variables denotando las posiciones de los obstáculos en el mapa.*/ 
+// se le suma a la altura y al ancho 2 cuadros al inicio 
+// y al final para representar las paredes en lo bordes
+// del mapa
+// Y se multiplica por el inverso multiplicativo 
+// de la resolución pues un número de cuadros 
+// inversamente proporcional a la resolución para representar
+// un cuadro de 1 metro.
+const int WIDTH = (14+2)*(1/RESOLUTION);           // A lo largo del eje rojo x --- 15/0.3 = 4.5 mts
+const int HEIGHT = (8+2)*(1/RESOLUTION);//30;//          // A lo largo del eje verde y -- 18/0.3 = 5.4 mts 
+//const int WIDTH = 27;
+//const int HEIGHT = 30;
+
 
 // Coordenadas del tamaño de la puerta.
 const int DOOR_START = (HEIGHT-1) - 8;
@@ -180,6 +191,16 @@ void mapOrientation(nav_msgs::OccupancyGrid& map, float x, float y, float z, flo
   map.info.origin.orientation.y = y;
   map.info.origin.orientation.z = z;
   map.info.origin.orientation.w = w;
+}
+
+void mapRPYOrientation(nav_msgs::OccupancyGrid& map, float x, float y, float z){
+  tf2::Quaternion myQuaternion;
+  myQuaternion.setRPY( x, y, z ); 
+  myQuaternion.normalize(); 
+  map.info.origin.orientation.x = myQuaternion[0];
+  map.info.origin.orientation.y = myQuaternion[1];
+  map.info.origin.orientation.z = myQuaternion[2];
+  map.info.origin.orientation.w = myQuaternion[3];
 }
 
 /**

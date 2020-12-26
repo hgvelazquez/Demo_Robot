@@ -7,6 +7,7 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
+
 #define _USE_MATH_DEFINES
 
 
@@ -71,8 +72,8 @@ class Sensor {
         float y = current_position.y - map.info.origin.position.y;
         float resolution = map.info.resolution;
         // Obtenemos el punto actual de la cuadrícula. 
-        int i = (int)(x/0.2);
-        int j = (int)(y/0.2);
+        int i = (int)(x/resolution);
+        int j = (int)(y/resolution);
       
         // atan2 manages all cases where y == 0 or x == 0...
         float angle = atan2(absolute_angle.y(), absolute_angle.x());

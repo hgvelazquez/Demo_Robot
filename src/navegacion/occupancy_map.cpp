@@ -175,10 +175,13 @@ int main( int argc, char** argv )
             //Necesito 14 en x 8 en y
     mapDimensions(map, RESOLUTION, WIDTH, HEIGHT);
     mapDimensions(map_for_vor, RESOLUTION, WIDTH, HEIGHT);
-    mapOrigin(map, WIDTH/2, (DOOR_END - 1), 0);
-    mapOrigin(map_for_vor, WIDTH/2, (DOOR_END - 1), 0);
+    mapOrigin(map, WIDTH/2, 2, 0);
+    mapOrigin(map_for_vor, WIDTH/2, 2, 0);
+    ROS_ERROR("occupancy_map.cpp: the value is %d",(DOOR_END - 1));
     mapOrientation(map, 0.0, 0, 0, 1);   
     mapOrientation(map_for_vor, 0.0, 0, 0, 1);
+    //mapRPYOrientation(map, 0, 0, 0);   
+    //mapRPYOrientation(map_for_vor, 0, 0, 0);   
 
 
     /* Adaptar la función para que solo reciba 
