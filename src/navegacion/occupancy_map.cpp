@@ -172,12 +172,15 @@ int main( int argc, char** argv )
     mapHeader(map);
     mapHeader(map_for_vor);
 
+    // Puntos de origen para la posición de la kobuki
+    int origin_x = .5*(1/RESOLUTION);
+    int origin_y = WIDTH/2;
             //Necesito 14 en x 8 en y
     mapDimensions(map, RESOLUTION, WIDTH, HEIGHT);
     mapDimensions(map_for_vor, RESOLUTION, WIDTH, HEIGHT);
-    mapOrigin(map, WIDTH/2, 2, 0);
-    mapOrigin(map_for_vor, WIDTH/2, 2, 0);
-    ROS_ERROR("occupancy_map.cpp: the value is %d",(DOOR_END - 1));
+    mapOrigin(map, origin_y, origin_x, 0);
+    mapOrigin(map_for_vor, origin_y, origin_x, 0);
+    ROS_INFO("occupancy_map.cpp: the value is %d",(DOOR_END - 1));
     mapOrientation(map, 0.0, 0, 0, 1);   
     mapOrientation(map_for_vor, 0.0, 0, 0, 1);
     //mapRPYOrientation(map, 0, 0, 0);   
@@ -199,24 +202,81 @@ int main( int argc, char** argv )
         obstacles[i] = 0;
     
     /* Llenamos la información de los obstáculos en el mapa original. */
-    char* data = fillMap(obstacles, size);
+    // ######## Desde aquí para mapa del salón #######################
+    // char* data = fillMap(obstacles, size);
+    // char* data_for_vor = new char[size];
+    // data_for_vor = fillMap(obstacles, size);    
+    // ######## Hasta aquí para mapa del salón #######################
 
-    // char* data = new char[size];
+    // ######## Desde aquí para mapa custom ##########################
+    char* data = new char[size];
     char* data_for_vor = new char[size];
 
-    // for(int i = 0; i < size; i++) {
-    //     data[i] = 0;
-    //     data_for_vor[i] = 0;
-    // }
-    // fillMapWalls(data, obstacles);
-    // fillMapWalls(data_for_vor, obstacles);
+    for(int i = 0; i < size; i++) {
+        data[i] = 0;
+        data_for_vor[i] = 0;
+    }
+    fillMapWalls(data, obstacles);
+    fillMapWalls(data_for_vor, obstacles);
+    // ######## Hasta aquí para mapa custom ##########################
+
+    // ### Ahora agregamos obstaculos que no cambian de la representación
+    // del mapa en el rulebook.
+
+    // Paredes entre (-2,0) (2,0)
+    addObstacleFromOriginID(data, obstacles, left_wall_id, origin_x, origin_y, -2, -.4, 1.9, -.1);
+    addObstacleFromOriginID(data_for_vor, obstacles, left_wall_id, origin_x, origin_y, -2, -.4, 1.9, -.1);
+
+    // Pared en L del lado izquiero equipo Cyan
+    addObstacleFromOriginID(data, obstacles, left_wall_id, origin_x, origin_y, 4, -.4, 7.4, -.1);
+    addObstacleFromOriginID(data_for_vor, obstacles, left_wall_id, origin_x, origin_y, 4, -.4, 7.4, -.1);
+
+    addObstacleFromOriginID(data, obstacles, left_wall_id, origin_x, origin_y, 4, 0, 4, 0.9);
+    addObstacleFromOriginID(data_for_vor, obstacles, left_wall_id, origin_x, origin_y, 4, 0, 4, 0.9);
+
+    // Pared en L del lado izquiero equipo Magenta
+    addObstacleFromOriginID(data, obstacles, left_wall_id, origin_x, origin_y, -7.4, -.4, -4.1, -.1);
+    addObstacleFromOriginID(data_for_vor, obstacles, left_wall_id, origin_x, origin_y, -7.4, -.4, -4.1, -.1);
+
+    addObstacleFromOriginID(data, obstacles, left_wall_id, origin_x, origin_y, -4.1, 0, -4.1, 0.9);
+    addObstacleFromOriginID(data_for_vor, obstacles, left_wall_id, origin_x, origin_y, -4.1, 0, -4.1, 0.9);
+
+    // Pared de lado derecho
+    addObstacleFromOriginID(data, obstacles, right_wall_id, origin_x, origin_y, -7.4, 8, 7.4, 8.4);
+    addObstacleFromOriginID(data, obstacles, right_wall_id, origin_x, origin_y, -7.4, 8, 7.4, 8.4);
+
+    addMachineVertical(data, obstacles, origin_x, origin_y, 3, 6);
+    addMachineVertical(data_for_vor, obstacles, origin_x, origin_y, 3, 6);
+
+    addMachineVertical(data, obstacles, origin_x, origin_y, -3, 6);
+    addMachineVertical(data_for_vor, obstacles, origin_x, origin_y, -3, 6);
+
+    addMachineVertical(data, obstacles, origin_x, origin_y, 1, 7);
+    addMachineVertical(data_for_vor, obstacles, origin_x, origin_y, 1, 7);
+
+    addMachineVertical(data, obstacles, origin_x, origin_y, -1, 7);
+    addMachineVertical(data_for_vor, obstacles, origin_x, origin_y, -1, 7);
+
+    addMachineHorizontal(data, obstacles, origin_x, origin_y, 0, 3);
+    addMachineHorizontal(data_for_vor, obstacles, origin_x, origin_y, 0, 3);
+
+    // addObstacleFromOrigin(data, obstacles, origin_x, origin_y, 5, .9, 6.9, .9);
+    // addObstacleFromOrigin(data_for_vor, obstacles, origin_x, origin_y, 5, .9, 6.9, .9);
+
+    // addObstacleFromOrigin(data, obstacles, origin_x, origin_y, -7, .9, -5.1, .9);
+    // addObstacleFromOrigin(data_for_vor, obstacles, origin_x, origin_y, -7, .9, -5.1, .9);
     
+    // addObstacle(data, origin_y+((1/RESOLUTION)*-7), (8*(1/RESOLUTION))-1, origin_y+((1/RESOLUTION)*7)-1, (8*(1/RESOLUTION))-1, obstacles);
+    // addObstacle(data_for_vor, origin_y+((1/RESOLUTION)*-7), (8*(1/RESOLUTION))-1, origin_y+((1/RESOLUTION)*7)-1, (8*(1/RESOLUTION))-1, obstacles);
+
+
     /* Copiamos esa información para el de la información de Voronoi. 
      * deben ser distintos pues el valor de relleno toma una interpretación
      * distinta en general.
      */
     
-    data_for_vor = fillMap(obstacles, size);
+    addMachineVertical(data, obstacles, origin_x, origin_y, 4, 4);
+    addMachineVertical(data_for_vor, obstacles, origin_x, origin_y, 4, 4);
 
     //addMachine(data_for_vor, 3, 2, obstacles);
     //addMachine(data, 3, 2, obstacles);
@@ -246,7 +306,7 @@ int main( int argc, char** argv )
   
     map.data = std::vector<int8_t>(data, data + size);
     map_for_vor.data = std::vector<int8_t>(data_for_vor, data_for_vor + size);
-    tables = addTables(map);
+    //tables = addTables(map);
 
     while (ros::ok())
     {

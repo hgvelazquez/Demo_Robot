@@ -33,7 +33,8 @@ START   R----.        ----------------             |
 #include <tf2/LinearMath/Quaternion.h>
 
 
-const float RESOLUTION = 0.2;   // metros/cuadro
+const float RESOLUTION = 0.1;   // metros/cuadro
+const float RES_INV = 1/RESOLUTION;   // metros/cuadro
 /** Variables denotando las posiciones de los obstáculos en el mapa.*/ 
 // se le suma a la altura y al ancho 2 cuadros al inicio 
 // y al final para representar las paredes en lo bordes
@@ -42,8 +43,8 @@ const float RESOLUTION = 0.2;   // metros/cuadro
 // de la resolución pues un número de cuadros 
 // inversamente proporcional a la resolución para representar
 // un cuadro de 1 metro.
-const int WIDTH = (14+2)*(1/RESOLUTION);           // A lo largo del eje rojo x --- 15/0.3 = 4.5 mts
-const int HEIGHT = (8+2)*(1/RESOLUTION);//30;//          // A lo largo del eje verde y -- 18/0.3 = 5.4 mts 
+const int WIDTH = (14+1)*RES_INV;           // A lo largo del eje rojo x --- 15/0.3 = 4.5 mts
+const int HEIGHT = (8+1)*RES_INV;//30;//          // A lo largo del eje verde y -- 18/0.3 = 5.4 mts 
 //const int WIDTH = 27;
 //const int HEIGHT = 30;
 
@@ -75,6 +76,11 @@ const int BACK_TABLE_X_START = FRONT_TABLE_X_END+4;
 
 // El número de obstaculo (información necesaria para ir añadiendo los obstáculos)
 int obstacle_count;
+
+int left_wall_id;
+int right_wall_id;
+int up_wall_id;
+int down_wall_id;
 
 
 /** 
@@ -256,28 +262,90 @@ void fillMapWalls(char* data, int* obstacles)
   /* Agregamos la información de las paredes dandole un id de 
   obstaculo a cada una
   */
+  
+  left_wall_id = obstacle_count;
   fillRectangle(data, 0, 0, WIDTH-1, 0, 100, obstacles, obstacle_count++, true);
+  
+  up_wall_id = obstacle_count;
   fillRectangle(data, 0, 0, 0, HEIGHT-1, 100, obstacles, obstacle_count++, true);
+  
+  right_wall_id = obstacle_count;
   fillRectangle(data, 0, HEIGHT-1, WIDTH-1, HEIGHT-1, 100, obstacles, obstacle_count++, true);
+
+  down_wall_id = obstacle_count;
   fillRectangle(data, WIDTH-1, 0, WIDTH-1, HEIGHT-1, 100, obstacles, obstacle_count++, true);
   //fillRectangle(data, 0, DOOR_END+1, 0, HEIGHT-1, 100, obstacles, obstacle_count++, true);
 }
 
 /**
- * Esta función tiene la misma semántica que fillRectangle, pero sólo llena un 
- * único cuadrado de la celda. 
- * Esto facilita la escritura para cuando tenemos obstáculos muy pequeños.
+ * Esta función tiene casi la misma semántica que fillRectangle, 
+ * pero es más fácil de usar pues tiene los valores para agregar
+ * obstaculos en automático.
  * @param data arreglo con los valores necesarios para visualizar 
  * cada cuadro del mundo.
- * @param i cordenada x del cuadro que se quiere rellenar.
- * @param j cordenada y del cuadro que se quiere rellenar.
+ * @param i1 cordenada x desde la que se empieza a "rellenar".
+ * @param j1 cordenada y desde la que se empieza a "rellenar".
+ * @param i2 cordenada x donde se termina de "rellenar".
+ * @param j2 cordenada y donde se termina de "rellenar".
  * @param obstacles Arreglo cuyos valores representan el id del obstaculo 
  * que se va a agregar. 
- */
-void addMachine(char* data, int i, int j, int* obstacles)
+ */ 
+void addObstacle(char* data, int i1, int j1, int i2, int j2, int* obstacles) 
 {
-  fillRectangle(data, i, j, (i+1), (j+1), 100, obstacles, obstacle_count++, true);
-  fillRectangle(data, i, (WIDTH-j), (i+1), (WIDTH-j)-1, 100, obstacles, obstacle_count++, true);
+  /* Agregamos la información del obstaculo dandole un id
+  */
+  fillRectangle(data, i1, j1, i2, j2, 100, obstacles, obstacle_count++, true);
+}
+
+/**
+ * Esta función tiene casi la misma semántica que fillRectangle, 
+ * pero es más fácil de usar pues tiene los valores para agregar
+ * obstaculos en automático.
+ * @param data arreglo con los valores necesarios para visualizar 
+ * cada cuadro del mundo.
+ * @param obstacles Arreglo cuyos valores representan el id del obstaculo.
+ * @param id Identificador del obstaculo. 
+ * @param i1 cordenada x desde la que se empieza a "rellenar".
+ * @param j1 cordenada y desde la que se empieza a "rellenar".
+ * @param i2 cordenada x donde se termina de "rellenar".
+ * @param j2 cordenada y donde se termina de "rellenar".
+ * que se va a agregar. 
+ */ 
+void addObstacleFromOriginID(char* data, int* obstacles, int id, int origin_x, int origin_y, double i1, double j1, double i2, double j2) 
+{
+  /* Agregamos la información del obstaculo dandole un id
+  */
+  int y1 = RES_INV*i1;
+  int x1 = RES_INV*j1;
+  int y2 = RES_INV*i2;
+  int x2 = RES_INV*j2;
+  fillRectangle(data, origin_y+y1, origin_x+x1, origin_y+y2, origin_x+x2, 100, obstacles, id, true);
+}
+
+/**
+ * Esta función tiene casi la misma semántica que fillRectangle, 
+ * pero es más fácil de usar pues tiene los valores para agregar
+ * obstaculos en automático.
+ * @param data arreglo con los valores necesarios para visualizar 
+ * cada cuadro del mundo.
+ * @param obstacles Arreglo cuyos valores representan el id del obstaculo.
+ * @param i1 cordenada x desde la que se empieza a "rellenar".
+ * @param j1 cordenada y desde la que se empieza a "rellenar".
+ * @param i2 cordenada x donde se termina de "rellenar".
+ * @param j2 cordenada y donde se termina de "rellenar".
+ * que se va a agregar. 
+ */ 
+void addObstacleFromOrigin(char* data, int* obstacles, int origin_x, int origin_y, double i1, double j1, double i2, double j2) 
+{
+  addObstacleFromOriginID(data,obstacles,obstacle_count++,origin_x,origin_y,i1,j1,i2,j2);
+}
+
+void addMachineVertical(char* data, int* obstacles, int origin_x, int origin_y, double i1, double j1){
+  addObstacleFromOrigin(data, obstacles, origin_x, origin_y, i1+.3, j1+.1, i1+.7, j1+.8);
+}
+
+void addMachineHorizontal(char* data, int* obstacles, int origin_x, int origin_y, double i1, double j1){
+  addObstacleFromOrigin(data, obstacles, origin_x, origin_y, i1+.3, j1+.1, i1+.7, j1+.8);
 }
 
 /**

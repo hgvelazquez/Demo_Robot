@@ -407,7 +407,7 @@ int main (int argc, char** argv)
     ros::Publisher nav_velocity_pub = n.advertise<geometry_msgs::Twist>("/HOLA/mobile_base/commands/velocity", 1);
     
     ros::Subscriber sub_odom = n.subscribe(("/"+s+"/odom").c_str(), 5, updateSensors);
-    ROS_ERROR("CamposSensores.cpp: suscribed to: %s", ("/"+s+"/odom").c_str()); 
+    ROS_INFO("CamposSensores.cpp: suscribed to: %s", ("/"+s+"/odom").c_str()); 
     
     ros::Subscriber sub_map = n.subscribe("/occupancy_map", 5, getMapParams);
     ros::Subscriber nav_sub = n.subscribe("/a_star_goal", 1, nav_receiveNavGoal);

@@ -12,6 +12,10 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 
+#include "move_base_msgs/MoveBaseActionGoal.h"
+#include "move_base_msgs/MoveBaseActionResult.h"
+#include "move_base_msgs/MoveBaseActionFeedback.h"
+
 #include <vector>
 #include <queue>
 #include <stack>
@@ -75,8 +79,8 @@ void getMapParams(const  nav_msgs::OccupancyGrid::ConstPtr& msg)
  */
 geometry_msgs::Point getPoint(Vertice* v) {
     geometry_msgs::Point p; 
-    p.x = (v->x)*0.2  + origin_x;
-    p.y = (v->y)*0.2 + origin_y;
+    p.x = (v->x)*RESOLUTION + origin_x;
+    p.y = (v->y)*RESOLUTION + origin_y;
     return p;
 }
 
@@ -122,7 +126,8 @@ void updatePoint(const nav_msgs::Odometry::ConstPtr& msg){
  */
 void receiveNavGoal(const geometry_msgs::PoseStamped& poseStamped)
 {
-  ROS_ERROR("motion_planner.cpp receivedGoal");
+  //ROS_INFO("Motion_planer.cpp: suscribed to: %s", ("/"+s+"/move_base_simple/goal").c_str());
+  ROS_INFO("motion_planner.cpp [%s] : receivedGoal",s.c_str());
   // Sacamos el ancho para escribirlo más fácilmente.
   int WIDTH = MAP.info.width;
   
@@ -130,33 +135,31 @@ void receiveNavGoal(const geometry_msgs::PoseStamped& poseStamped)
   sent_goal = 0;
   
   // Obtenemos la celda en la que se encuentra la KOBUKI.
-  int u = floor((kob_pose.position.x - origin_x)/0.2);
-  int w = floor((kob_pose.position.y - origin_y)/0.2);
-  printf("printf: YOU ARE AT: %d, %d\n", u, w);
-  ROS_ERROR("YOU ARE AT: %d, %d\n", u, w);
+  int u = floor((kob_pose.position.x - origin_x)/RESOLUTION);
+  int w = floor((kob_pose.position.y - origin_y)/RESOLUTION);
+  ROS_INFO("motion_planner.cpp [%s] YOU ARE AT: %d, %d\n", s.c_str(), u, w);
   
   // Obtenemos la celda a la que queremos llegar. 
-  int x = floor((goal.x - origin_x)/0.2);
-  int y = floor((goal.y - origin_y)/0.2);
-  ROS_ERROR("GOING TO : %d, %d\n", x, y);
+  int x = floor((goal.x - origin_x)/RESOLUTION);
+  int y = floor((goal.y - origin_y)/RESOLUTION);
+  ROS_INFO("motion_planner.cpp [%s] GOING TO : %d, %d\n", s.c_str(), x, y);
   
   // Obtenemos los vértices más cerecanos a ambas celdas.
   Vertice* inic = nearest_voronoi[u + w*WIDTH];
   Vertice* fin = nearest_voronoi[x + y*WIDTH];
-  ROS_ERROR("after vertices");
   
   
-  printf("INIC: %d, %d\n", inic->x, inic->y);
-  printf("%2.3f, %2.3f\n", getPoint(inic).x, getPoint(inic).y);
-  printf("END:  %d, %d\n", fin->x, fin->y);
-  printf("%2.3f, %2.3f\n", getPoint(fin).x, getPoint(fin).y);
+  ROS_INFO("motion_planner.cpp [%s] INIC: %d, %d\n", s.c_str(), inic->x, inic->y);
+  ROS_INFO("motion_planner.cpp [%s] : %2.3f, %2.3f\n", s.c_str(), getPoint(inic).x, getPoint(inic).y);
+  ROS_INFO("motion_planner.cpp [%s] END:  %d, %d\n", s.c_str(), fin->x, fin->y);
+  ROS_INFO("motion_planner.cpp [%s] : %2.3f, %2.3f\n", s.c_str(), getPoint(fin).x, getPoint(fin).y);
   // Obtenemos la ruta en la gráfica con A*.
   std::stack<Vertice*> a = AStar(VORONOI_GRAPH, inic, fin); 
-  ROS_ERROR("after astar");
+
   a_star_route = a;
   next = getPoint(a_star_route.top());
-  printf("NEXT: %d, %d\n", a_star_route.top()->x, a_star_route.top()->y);
-  ROS_ERROR("NEXT: %d, %d\n", a_star_route.top()->x, a_star_route.top()->y);
+  
+  ROS_INFO("motion_planner.cpp [%s] NEXT: %d, %d\n", s.c_str(), a_star_route.top()->x, a_star_route.top()->y);
   almost = false;
   reached_last = false;
   turn = 0;
@@ -406,8 +409,7 @@ geometry_msgs::Twist rotate()
 
 int main( int argc, char** argv )
 {
-  
-    ros::init(argc, argv, "motion_planner");
+    ros::init(argc, argv, "motion_planner");  
     ros::NodeHandle n("~");
     ros::Rate r(10);
 
@@ -418,13 +420,13 @@ int main( int argc, char** argv )
 
     if (n.getParam("robot_name", s))
     {
-      ROS_ERROR("Motion_planner.cpp: Got param: %s", s.c_str());
+      ROS_INFO("Motion_planner.cpp: Got param: %s", s.c_str());
     }
     else
     {
       ROS_ERROR("Motion_planner.cpp: Failed to get param 'robot_name'");
     }
-    
+
     // Tópicos donde publicaremos.
     ros::Publisher a_star_pub = n.advertise<geometry_msgs::Point>("a_star_goal", 5);
     ros::Publisher rotate_pub = n.advertise<geometry_msgs::Twist>("/HOLA/mobile_base/commands/velocity", 1);
@@ -432,9 +434,9 @@ int main( int argc, char** argv )
     
     // Tópicos donde escucharemos.
     ros::Subscriber nav_sub = n.subscribe(("/"+s+"/move_base_simple/goal").c_str(), 5, receiveNavGoal);
-    ROS_ERROR("Motion_planer.cpp: suscribed to: %s", ("/"+s+"/move_base_simple/goal").c_str());
+    ROS_INFO("Motion_planer.cpp: suscribed to: %s", ("/"+s+"/move_base_simple/goal").c_str());
     ros::Subscriber odom_sub = n.subscribe(("/"+s+"/odom").c_str(), 5, updatePoint);
-    ROS_ERROR("Motion_planer.cpp: suscribed to: %s", ("/"+s+"/odom").c_str());
+    ROS_INFO("Motion_planer.cpp: suscribed to: %s", ("/"+s+"/odom").c_str());
     
     ros::Subscriber map_sub = n.subscribe("/voronoi_info", 5, getMapParams);
   
@@ -464,7 +466,7 @@ int main( int argc, char** argv )
             a_star_pub.publish(next);
             f.finished = 0;
         } else if (sent_goal == 0) {     
-            printf("GOING TO FINAL GOAL\n");
+            ROS_INFO("motion_planner.cpp [%s] : GOING TO FINAL GOAL",s.c_str());
             a_star_pub.publish(goal);
             sent_goal = 1;
             f.finished = 0;

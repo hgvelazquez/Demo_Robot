@@ -68,7 +68,7 @@
 
             Se suscribe /robot_1/odom para saber la posición actual de robot_1 
         -->
-        <node pkg="hola_tortuga" type="motion_planner" name="motion">
+        <node pkg="hola_tortuga" type="motion_planner_action" name="motion" output="screen">
             <param name="robot_name" type="string" value="$(arg robot_name)"/>
             <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
         </node>
@@ -144,7 +144,7 @@
 
             Se suscribe /robot_1/odom para saber la posición actual de robot_1 
         -->
-        <node pkg="hola_tortuga" type="motion_planner" name="motion">
+        <node pkg="hola_tortuga" type="motion_planner" name="motion" output="screen">
             <param name="robot_name" type="string" value="$(arg robot_name)"/>
             <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
         </node>
@@ -220,7 +220,7 @@
 
             Se suscribe /robot_1/odom para saber la posición actual de robot_1 
         -->
-        <node pkg="hola_tortuga" type="motion_planner" name="motion">
+        <node pkg="hola_tortuga" type="motion_planner" name="motion" output="screen">
             <param name="robot_name" type="string" value="$(arg robot_name)"/>
             <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
         </node>
@@ -296,7 +296,7 @@
 
             Se suscribe /robot_1/odom para saber la posición actual de robot_1 
         -->
-        <node pkg="hola_tortuga" type="motion_planner" name="motion">
+        <node pkg="hola_tortuga" type="motion_planner" name="motion" output="screen">
             <param name="robot_name" type="string" value="$(arg robot_name)"/>
             <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
         </node>
@@ -448,7 +448,7 @@
 
             Se suscribe /robot_1/odom para saber la posición actual de robot_1 
         -->
-        <node pkg="hola_tortuga" type="motion_planner" name="motion">
+        <node pkg="hola_tortuga" type="motion_planner" name="motion" output="screen">
             <param name="robot_name" type="string" value="$(arg robot_name)"/>
             <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
         </node>

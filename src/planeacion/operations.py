@@ -3,6 +3,8 @@
 import sys
 import rospy
 import time
+import actionlib
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from std_srvs.srv import SetBool
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Twist
@@ -11,26 +13,6 @@ from std_msgs.msg import Float64MultiArray
 from hola_tortuga.msg import Finished
 from rospy import ROSException
 
-
-global RESOLUTION
-RESOLUTION = 0.2   # metros/cuadro
-global FINISHED_RB1
-FINISHED_RB1 = False
-
-global FINISHED_RB2
-FINISHED_RB2 = False
-
-global FINISHED_RB3
-FINISHED_RB3 = False
-
-global FINISHED_RB4
-FINISHED_RB4 = False
-
-global FINISHED_RB5
-FINISHED_RB5 = False
-
-global FINISHED_RB6
-FINISHED_RB6 = False
 
 # Metodo para crear un cliente para llamar
 # al servivio que mueve el brazo robot
@@ -80,8 +62,8 @@ def finishedCallback_rb6(msg):
 def move_robot(goal_publisher,x,y):
     # Notificamos a la navegación la ubicación objetivo
     nav_goal = PoseStamped()
-    nav_goal.pose.position.x = RESOLUTION*x
-    nav_goal.pose.position.y = RESOLUTION*y
+    nav_goal.pose.position.x = x
+    nav_goal.pose.position.y = y
     goal_publisher.publish(nav_goal)
     time.sleep(.2)
     print("go to\n\n"+str(nav_goal))
@@ -149,14 +131,13 @@ if __name__ == "__main__":
 
         time.sleep(1)
         
-        global RESOLUTION
 
-        move_robot(goal_publisher_rb1,2,1)
-        move_robot(goal_publisher_rb2,0,2)
-        # move_robot(goal_publisher_rb3,-5,-12)
-        # move_robot(goal_publisher_rb4,10,-5)
-        # move_robot(goal_publisher_rb5,-2,-5)
-        # move_robot(goal_publisher_rb6,-4,5)
+        move_robot(goal_publisher_rb1,-1,1)
+        move_robot(goal_publisher_rb2,-2,2)
+        move_robot(goal_publisher_rb3,-3,3)
+        move_robot(goal_publisher_rb4,1,.5)
+        move_robot(goal_publisher_rb5,2,1.5)
+        move_robot(goal_publisher_rb6,3,2.5)
            
 
     except rospy.ROSInterruptException:
