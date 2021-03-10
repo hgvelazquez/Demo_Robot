@@ -132,10 +132,10 @@ if __name__ == "__main__":
         time.sleep(1)
         
 
-        move_robot(goal_publisher_rb1,-1,1)
-        move_robot(goal_publisher_rb2,-2,2)
-        move_robot(goal_publisher_rb3,-3,3)
-        move_robot(goal_publisher_rb4,1,.5)
+        #move_robot(goal_publisher_rb1,-1,1)
+        move_robot(goal_publisher_rb2,-5,4)
+        move_robot(goal_publisher_rb3,-3,6)
+        move_robot(goal_publisher_rb4,2,.5)
         move_robot(goal_publisher_rb5,2,1.5)
         move_robot(goal_publisher_rb6,3,2.5)
            

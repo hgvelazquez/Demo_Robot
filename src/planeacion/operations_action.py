@@ -39,8 +39,8 @@ if __name__ == "__main__":
     goal.target_pose.header.frame_id = "map"
     goal.target_pose.header.stamp = rospy.Time.now()
 
-    goal.target_pose.pose.position.x = 1.0
-    goal.target_pose.pose.position.y = 1.0
+    goal.target_pose.pose.position.x = -5.0
+    goal.target_pose.pose.position.y = 7.0
     goal.target_pose.pose.position.z = 0.0
     goal.target_pose.pose.orientation.x = 0.0
     goal.target_pose.pose.orientation.y = 0.0

@@ -1,0 +1,104 @@
+<!-- Como se usa launch: http://wiki.ros.org/roslaunch/XML/launch -->
+<launch>
+    <!--Como se usa arg: http://wiki.ros.org/roslaunch/XML/arg
+        Declaramos la existencia de las variables urdf_file y robot_name -->
+    <arg name="urdf_file"/>
+    <arg name="robot_name"/>
+
+    <!-- Como se usa param: http://wiki.ros.org/roslaunch/XML/param
+        De define un parametro para ser fijado en el Servidor de parametros(Parameter Server)
+        se pueden poner valores o archivos -->
+    <param name="robot_description" command="$(arg urdf_file)" />
+
+    <!-- Como se usa node: http://wiki.ros.org/roslaunch/XML/node
+        Inicia un nodo de tipo nodelet que se encuentra definido en el paquete nodelet
+        con el nombre mobile_base_nodelet_manager con el argumento de linea de comandos manager -->
+    <node pkg="nodelet" type="nodelet" name="mobile_base_nodelet_manager" args="manager"/>
+
+    <node pkg="nodelet" type="nodelet" name="mobile_base" args="load kobuki_softnode/SoftKobukiNodelet mobile_base_nodelet_manager">
+        <!-- Como se usa rosparam: http://wiki.ros.org/roslaunch/XML/rosparam
+            Cargamos los parametros definidos en el archivo base.yaml -->
+        <rosparam file="$(find kobuki_softnode)/param/base.yaml" command="load"/>
+        
+        <param name="base_frame" type="string"  value="$(arg robot_name)_tf/base_footprint"/>
+        
+        <!-- Como se usa remap: http://wiki.ros.org/roslaunch/XML/remap 
+            Pero como además este launch se ejecuta dentro de un grupo en el archivo
+            inicia_tortugas.launch al final quedan mapeados con el prefijo de ese grupo
+            más el valor al que se hace el remap -->
+        <remap from="mobile_base/odom" to="/$(arg robot_name)/odom"/>
+        <remap from="mobile_base/enable" to="enable"/>
+        <remap from="mobile_base/disable" to="disable"/>
+        <remap from="mobile_base/joint_states" to="/$(arg robot_name)/joint_states"/> 
+    </node>
+
+    <!--
+        Código originado en el archivo full.launch para ejecutar una kobuki defalut
+        Se desconoce la funcionalidad de este nodo, pero ignorarlo no afecta los fines de el código
+        actual.
+    <node pkg="diagnostic_aggregator" type="aggregator_node" name="diagnostic_aggregator" >
+        <rosparam command="load" file="$(find kobuki_softnode)/param/diagnostics.yaml" />
+    </node> 
+    -->
+
+    <!-- Necesitamos esto para que se desplieguen los cambios de estado del robot
+    Para saber más: http://wiki.ros.org/robot_state_publisher -->
+    <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
+        <param name="publish_frequency" type="double" value="30.0" />
+        <param name="tf_prefix" value="$(arg robot_name)_tf"/>
+    </node>
+
+    <!-- Necesitamos esto para que se desplieguen los cambios de estado del robot, 
+        este publica información que usa robot_state_publisher
+    Para saber más: http://wiki.ros.org/joint_state_publisher -->
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
+        <rosparam param="source_list">["joint_states_interpolated"]</rosparam>
+        <param name="publish_frequency" type="double" value="30.0" />
+        <param name="tf_prefix" type="string" value="$(arg robot_name)_tf"/>
+    </node>
+
+    <!--
+        ###############################################################################
+        #   A partir de aquí se ejecutan nodos implementados en este mismo paquete.   #
+        ###############################################################################
+    -->
+
+    <!-- 
+        SENSORES 
+        Publica los marcadores (las lineas verdes que salen de los robots en rviz) de los sensores a rviz
+        y los actualiza lo cual es necesario para la navegación.
+    
+        Publica intrucciones instruciones de a donde moverse a /?{robot_name}/mobile_base/commands/velocity
+    -->
+    <node pkg="hola_tortuga" type="campos" name="campos_tortuga" >
+        <param name="robot_name" type="string" value="$(arg robot_name)"/>
+        <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
+        <remap from="/a_star_goal" to="motion/a_star_goal"/>
+    </node>
+    <!-- 
+        NAVEGACIÓN 
+        Publica intrucciones a /?{robot_name}/mobile_base/commands/velocity instruciones de a donde moverse
+
+        Publica cuando llega a su robot_description
+
+        Se suscribe a /?{robot_name}/move_base_simple/goal para saber a donde ir
+
+        Se suscribe /?{robot_name}/odom para saber la posición actual del robot ?{robot_name} 
+    -->
+    <node pkg="hola_tortuga" type="motion_planner_action" name="motion" output="screen">
+        <param name="robot_name" type="string" value="$(arg robot_name)"/>
+        <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
+    </node>
+
+    <!--
+        Podríamos ejecutar un plan custom desde aquí para este robot,
+        pero dependiendo del tipo de comunicación puede no salir bien si hay 
+        más robots en ejecución.
+
+    <node pkg="hola_tortuga" type="plan.py" name="plan_tortuga" output="screen">
+        <param name="robot_name" type="string" value="$(arg robot_name)"/>
+        <remap from="demo_finished" to="motion/demo_finished"/>
+    </node>        
+    -->
+
+</launch>

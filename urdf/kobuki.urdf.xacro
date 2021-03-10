@@ -10,6 +10,8 @@
   <!-- <arg name="init_pose"> -->
   <xacro:include filename="$(find hola_tortuga)/urdf/common_properties.urdf.xacro"/>
   <xacro:include filename="$(find hola_tortuga)/urdf/kobuki_gazebo.urdf.xacro"/>
+  <xacro:include filename="$(find hola_tortuga)/urdf/kobuki_arm.urdf.xacro"/>
+
 
   <!-- Kobuki -->
   <xacro:macro name="kobuki">
@@ -161,7 +163,10 @@
     </link>
 
     <!-- Kobuki's arm -->
-    <material name="blue">
+    <kobuki_arm parent="base_link"/>
+
+
+    <!-- <material name="blue">
       <color rgba="0 0 1 1"/>
     </material>
     <material name="red">
@@ -390,7 +395,7 @@
         </geometry>
         <origin xyz="0.0 0.0 0.03"/>
       </collision>
-    </link> 
+    </link>  -->
 
     <!---->
 

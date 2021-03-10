@@ -227,12 +227,19 @@ int main( int argc, char** argv )
     addObstacleFromOriginID(data, obstacles, left_wall_id, origin_x, origin_y, -2, -.4, 1.9, -.1);
     addObstacleFromOriginID(data_for_vor, obstacles, left_wall_id, origin_x, origin_y, -2, -.4, 1.9, -.1);
 
-    // Pared en L del lado izquiero equipo Cyan
+    // Pared en L inversa del lado de abajo equipo Cyan
     addObstacleFromOriginID(data, obstacles, left_wall_id, origin_x, origin_y, 4, -.4, 7.4, -.1);
     addObstacleFromOriginID(data_for_vor, obstacles, left_wall_id, origin_x, origin_y, 4, -.4, 7.4, -.1);
 
     addObstacleFromOriginID(data, obstacles, left_wall_id, origin_x, origin_y, 4, 0, 4, 0.9);
     addObstacleFromOriginID(data_for_vor, obstacles, left_wall_id, origin_x, origin_y, 4, 0, 4, 0.9);
+
+    // Pared en L inversa del lado de abajo equipo Cyan
+    addObstacleFromOriginID(data, obstacles, up_wall_id, origin_x, origin_y, -7.4, 0.9, -7.1, 1.9);
+    addObstacleFromOriginID(data_for_vor, obstacles, up_wall_id, origin_x, origin_y, -7.4, 0.9, -7.1, 1.9);
+
+    addObstacleFromOriginID(data, obstacles, up_wall_id, origin_x, origin_y, -7.4, 0.9, -5.1, 0.9);
+    addObstacleFromOriginID(data_for_vor, obstacles, up_wall_id, origin_x, origin_y, -7.4, 0.9, -5.1, 0.9);
 
     // Pared en L del lado izquiero equipo Magenta
     addObstacleFromOriginID(data, obstacles, left_wall_id, origin_x, origin_y, -7.4, -.4, -4.1, -.1);
@@ -241,21 +248,38 @@ int main( int argc, char** argv )
     addObstacleFromOriginID(data, obstacles, left_wall_id, origin_x, origin_y, -4.1, 0, -4.1, 0.9);
     addObstacleFromOriginID(data_for_vor, obstacles, left_wall_id, origin_x, origin_y, -4.1, 0, -4.1, 0.9);
 
-    // Pared de lado derecho
-    addObstacleFromOriginID(data, obstacles, right_wall_id, origin_x, origin_y, -7.4, 8, 7.4, 8.4);
-    addObstacleFromOriginID(data, obstacles, right_wall_id, origin_x, origin_y, -7.4, 8, 7.4, 8.4);
+    // Pared en L inversa del lado de abajo equipo Cyan
+    addObstacleFromOriginID(data, obstacles, down_wall_id, origin_x, origin_y, 7.0, 0.9, 7.3, 1.9);
+    addObstacleFromOriginID(data_for_vor, obstacles, down_wall_id, origin_x, origin_y, 7.0, 0.9, 7.3, 1.9);
 
+    addObstacleFromOriginID(data, obstacles, down_wall_id, origin_x, origin_y, 5.0, 0.9, 6.9, 0.9);
+    addObstacleFromOriginID(data_for_vor, obstacles, down_wall_id, origin_x, origin_y, 5.0, 0.9, 6.9, 0.9);
+
+    // Pared lado derecho
+    addObstacleFromOriginID(data, obstacles, right_wall_id, origin_x, origin_y, -7.4, 8.0, 7.4, 8.3);
+    addObstacleFromOriginID(data_for_vor, obstacles, right_wall_id, origin_x, origin_y, -7.4, 8.0, 7.3, 8.3);
+
+    // Esquina superior de la pared lado derecho
+    addObstacleFromOriginID(data, obstacles, up_wall_id, origin_x, origin_y, -7.4, 6.5, -7.1, 7.9);
+    addObstacleFromOriginID(data_for_vor, obstacles, up_wall_id, origin_x, origin_y, -7.4, 6.5, -7.1, 7.9);
+
+    // Esquina inferior de la pared lado derecho
+    addObstacleFromOriginID(data, obstacles, down_wall_id, origin_x, origin_y, 7.0, 6.5, 7.3, 7.9);
+    addObstacleFromOriginID(data_for_vor, obstacles, down_wall_id, origin_x, origin_y, 7.0, 6.5, 7.3, 7.9);
+
+
+    // Maquinas que se agregan
     addMachineVertical(data, obstacles, origin_x, origin_y, 3, 6);
     addMachineVertical(data_for_vor, obstacles, origin_x, origin_y, 3, 6);
 
     addMachineVertical(data, obstacles, origin_x, origin_y, -3, 6);
     addMachineVertical(data_for_vor, obstacles, origin_x, origin_y, -3, 6);
 
-    addMachineVertical(data, obstacles, origin_x, origin_y, 1, 7);
-    addMachineVertical(data_for_vor, obstacles, origin_x, origin_y, 1, 7);
+    addMachineVerticalID(data, obstacles, right_wall_id, origin_x, origin_y, 1, 7);
+    addMachineVerticalID(data_for_vor, obstacles, right_wall_id, origin_x, origin_y, 1, 7);
 
-    addMachineVertical(data, obstacles, origin_x, origin_y, -1, 7);
-    addMachineVertical(data_for_vor, obstacles, origin_x, origin_y, -1, 7);
+    addMachineVerticalID(data, obstacles, right_wall_id, origin_x, origin_y, -1, 7);
+    addMachineVerticalID(data_for_vor, obstacles, right_wall_id, origin_x, origin_y, -1, 7);
 
     addMachineHorizontal(data, obstacles, origin_x, origin_y, 0, 3);
     addMachineHorizontal(data_for_vor, obstacles, origin_x, origin_y, 0, 3);

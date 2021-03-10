@@ -340,6 +340,14 @@ void addObstacleFromOrigin(char* data, int* obstacles, int origin_x, int origin_
   addObstacleFromOriginID(data,obstacles,obstacle_count++,origin_x,origin_y,i1,j1,i2,j2);
 }
 
+void addMachineVerticalID(char* data, int* obstacles, int id, int origin_x, int origin_y, double i1, double j1){
+  addObstacleFromOriginID(data, obstacles, id, origin_x, origin_y, i1+.3, j1+.1, i1+.7, j1+.8);
+}
+
+void addMachineHorizontal(char* data, int* obstacles, int id, int origin_x, int origin_y, double i1, double j1){
+  addObstacleFromOriginID(data, obstacles, id, origin_x, origin_y, i1+.3, j1+.1, i1+.7, j1+.8);
+}
+
 void addMachineVertical(char* data, int* obstacles, int origin_x, int origin_y, double i1, double j1){
   addObstacleFromOrigin(data, obstacles, origin_x, origin_y, i1+.3, j1+.1, i1+.7, j1+.8);
 }
