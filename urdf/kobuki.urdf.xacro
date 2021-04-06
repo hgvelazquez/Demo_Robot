@@ -7,15 +7,40 @@
       kobuki_description/launch/view_model.launch
  -->
 <robot name="kobuki" xmlns:xacro="http://ros.org/wiki/xacro">
-  <!-- <arg name="init_pose"> -->
+  <!-- Incluimos archivos necesarios como propiedades de materiales
+  que se utilizarán para los links y demás partes del robot, propiedades
+  utiles para visualizar en gazebo y descripción del brazo robot. -->
   <xacro:include filename="$(find hola_tortuga)/urdf/common_properties.urdf.xacro"/>
   <xacro:include filename="$(find hola_tortuga)/urdf/kobuki_gazebo.urdf.xacro"/>
   <xacro:include filename="$(find hola_tortuga)/urdf/kobuki_arm.urdf.xacro"/>
 
 
-  <!-- Kobuki -->
-  <xacro:macro name="kobuki">
-    <link name="base_footprint"/>
+  <!-- Kobuki 
+    Notece que en esta parte se toman los parametros para posición inicial
+    prefijo tf y si el brazo es necesario.
+  -->
+  <xacro:macro name="kobuki" params="x y tf_prefix with_arm">
+
+    <!-- Iniciamos todo robot en un mismo link llamado start -->
+    <link name="start"/>
+
+    <joint name="start_odom_joint" type="fixed">
+      <origin xyz="$(arg x) $(arg y) 0" rpy="0 0 0" />
+      <parent link="start"/>
+      <child link="$(arg tf_prefix)/odom" />
+    </joint>
+
+    <!-- A partir de aquí todos los links tendrán como 
+    prefijo el valor tf_frefix recibido como parametro.-->
+    <link name="$(arg tf_prefix)/odom"/>
+  
+    <joint name="odom_base_footprint_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <parent link="$(arg tf_prefix)/odom"/>
+      <child link="$(arg tf_prefix)/base_footprint" />
+    </joint>
+
+    <link name="$(arg tf_prefix)/base_footprint"/>
     <!--
        Base link is set at the bottom of the base mould.
        This is done to be compatible with the way base link
@@ -29,11 +54,11 @@
       -->
     <joint name="base_joint" type="fixed">
       <origin xyz="0 0 0.0102" rpy="0 0 0" />
-      <parent link="base_footprint"/>
-      <child link="base_link" />
+      <parent link="$(arg tf_prefix)/base_footprint"/>
+      <child link="$(arg tf_prefix)/base_link" />
     </joint>
 
-    <link name="base_link">
+    <link name="$(arg tf_prefix)/base_link">
       <visual>
         <geometry>
           <!-- new mesh -->
@@ -65,12 +90,12 @@
     </link>
 
     <joint name="wheel_left_joint" type="continuous">
-      <parent link="base_link"/>
-      <child link="wheel_left_link"/>
+      <parent link="$(arg tf_prefix)/base_link"/>
+      <child link="$(arg tf_prefix)/wheel_left_link"/>
       <origin xyz="0.00 ${0.23/2} 0.0250" rpy="${-M_PI/2} 0 0"/>
       <axis xyz="0 0 1"/>
     </joint>
-    <link name="wheel_left_link">
+    <link name="$(arg tf_prefix)/wheel_left_link">
       <visual>
         <geometry>
           <mesh filename="package://kobuki_description/meshes/wheel.dae"/>
@@ -93,12 +118,12 @@
     </link>
 
     <joint name="wheel_right_joint" type="continuous">
-      <parent link="base_link"/>
-      <child link="wheel_right_link"/>
+      <parent link="$(arg tf_prefix)/base_link"/>
+      <child link="$(arg tf_prefix)/wheel_right_link"/>
       <origin xyz="0.00 -${0.23/2} 0.0250" rpy="${-M_PI/2} 0 0"/>
       <axis xyz="0 0 1"/>
     </joint>
-    <link name="wheel_right_link">
+    <link name="$(arg tf_prefix)/wheel_right_link">
       <visual>
         <geometry>
           <mesh filename="package://kobuki_description/meshes/wheel.dae"/>
@@ -121,11 +146,11 @@
     </link>
 
     <joint name="caster_front_joint" type="fixed">
-      <parent link="base_link"/>
-      <child link="caster_front_link"/>
+      <parent link="$(arg tf_prefix)/base_link"/>
+      <child link="$(arg tf_prefix)/caster_front_link"/>
       <origin xyz="0.115 0.0 0.007" rpy="${-M_PI/2} 0 0"/>
     </joint>
-    <link name="caster_front_link">
+    <link name="$(arg tf_prefix)/caster_front_link">
       <collision>
         <geometry>
           <cylinder length="0.0176" radius="0.017"/>
@@ -142,11 +167,11 @@
     </link>
 
     <joint name="caster_back_joint" type="fixed">
-      <parent link="base_link"/>
-      <child link="caster_back_link"/>
+      <parent link="$(arg tf_prefix)/base_link"/>
+      <child link="$(arg tf_prefix)/caster_back_link"/>
       <origin xyz="-0.135 0.0 0.009" rpy="${-M_PI/2} 0 0"/>
     </joint>
-    <link name="caster_back_link">
+    <link name="$(arg tf_prefix)/caster_back_link">
       <collision>
         <geometry>
           <cylinder length="0.0176" radius="0.017"/>
@@ -162,251 +187,23 @@
       </inertial>
     </link>
 
-    <!-- Kobuki's arm -->
-    <kobuki_arm parent="base_link"/>
-
-
-    <!-- <material name="blue">
-      <color rgba="0 0 1 1"/>
-    </material>
-    <material name="red">
-      <color rgba="1 0 0 1"/>
-    </material>
-    <material name="green">
-      <color rgba="0 1 0 1"/>
-    </material>
-    <material name="black">
-      <color rgba="0 0 0 1"/>
-    </material>
-    <material name="white">
-      <color rgba="1 1 1 1"/>
-    </material>
-
-
-    <joint name="arm_base_joint" type="fixed">
-      <origin xyz="0.065 0 0.089" rpy="0 0 0" />
-      <parent link="base_link"/>
-      <child link="arm_base_link" />
-    </joint>
-
-    <link name="arm_base_link">
-      <visual>
-        <geometry>
-          <cylinder length="0.05" radius="0.07"/>
-        </geometry>
-        <origin xyz="0.0 0.0 0.025"/>
-        <material name="blue"/>
-      </visual>
-      <collision>
-        <geometry>
-          <cylinder length="0.05" radius="0.07"/>
-        </geometry>
-        <origin xyz="0.0 0.0 0.025"/>
-        <material name="blue"/>
-      </collision>
-	  </link>
-
-
-    <joint name="joint_arm_0" type="revolute">
-      <parent link="arm_base_link"/>
-      <child link="arm_link_0"/>
-      <origin xyz="0.0 0.0 0.05"/>
-      <axis xyz="0 0 1"/>
-      <limit effort="1000" lower="-3.14" upper="3.14" velocity="5"/>
-    </joint>
-
-	
-    <link name="arm_link_0">
-      <visual>
-        <geometry>
-          <box size="0.025 0.05 0.03"/>
-        </geometry>
-        <origin xyz="0.0 0.0 0.015"/>
-        <material name="white"/>
-      </visual>
-      <collision>
-        <geometry>
-          <box size="0.025 0.05 0.03"/>
-        </geometry>
-        <origin xyz="0.0 0.0 0.015"/>
-        <material name="white"/>
-      </collision>
-    </link>
-
-
-    <joint name="arm_joint_1" type="revolute">
-      <parent link="arm_link_0"/>
-      <child link="arm_link_1"/>
-      <origin xyz="0.0 0.0 0.03"/>
-      <axis xyz="0 1 0"/>
-      <limit effort="1000" lower="-1.17" upper="1.17" velocity="5"/>
-    </joint>
-	
-    <link name="arm_link_1">
-      <visual>
-        <geometry>
-          <box size="0.02 0.02 0.11"/>
-        </geometry>
-        <origin xyz="0.0 0.0 0.045"/>
-        <material name="black"/>
-      </visual>
-      <visual>
-        <geometry>
-          <box size="0.05 0.02 0.02"/>
-        </geometry>
-        <origin xyz="0.015 0.0 0.09"/>
-        <material name="black"/>
-      </visual>
-      <collision>
-        <geometry>
-          <box size="0.02 0.02 0.11"/>
-        </geometry>
-        <origin xyz="0.0 0.0 0.045"/>
-        <material name="black"/>
-      </collision>
-      <collision>
-        <geometry>
-          <box size="0.05 0.02 0.02"/>
-        </geometry>
-        <origin xyz="0.015 0.0 0.09"/>
-        <material name="black"/>
-      </collision>
-    </link>
-
-
-    <joint name="arm_joint_2" type="revolute">
-      <parent link="arm_link_1"/>
-      <child link="arm_link_2"/>
-      <origin xyz="0.03 0.0 0.09"/>
-      <axis xyz="0 1 0"/>
-      <limit effort="1000" lower="-3.14" upper="3.14" velocity="5"/>
-    </joint>
-
-
-    <link name="arm_link_2">
-      <visual>
-        <geometry>
-          <box size="0.02 0.02 0.11"/>
-        </geometry>
-        <origin xyz="0.0 0.0 0.045"/>
-        <material name="white"/>
-      </visual>
-      <collision>
-        <geometry>
-          <box size="0.02 0.02 0.11"/>
-        </geometry>
-        <origin xyz="0.0 0.0 0.045"/>
-        <material name="white"/>
-      </collision>
-    </link>
-
-
-    <joint name="arm_joint_3" type="revolute">
-      <parent link="arm_link_2"/>
-      <child link="arm_link_3"/>
-      <origin xyz="0.0 0.0 0.09"/>
-      <axis xyz="0 1 0"/>
-      <limit effort="1000" lower="-3.14" upper="3.14" velocity="5"/>
-    </joint>
-
-    <link name="arm_link_3">
-      <visual>
-        <geometry>
-          <box size="0.02 0.02 0.13"/>
-        </geometry>
-        <origin xyz="0.0 0.0 0.055"/>
-        <material name="red"/>
-      </visual>
-      <collision>
-        <geometry>
-          <box size="0.02 0.02 0.13"/>
-        </geometry>
-        <origin xyz="0.0 0.0 0.08"/>
-      </collision>
-    </link>
-
-
-    <joint name="arm_joint_4" type="fixed">
-      <parent link="arm_link_3"/>
-      <child link="arm_link_4"/>
-      <origin xyz="0.0 0.0 0.13"/>
-      <axis xyz="0 0 1"/>
-    </joint>
-
-    <link name="arm_link_4">
-      <visual>
-        <geometry>
-          <box size="0.02 0.02 0.02"/>
-        </geometry>
-        <origin xyz="0.0 0.0 0.0"/>
-        <material name="green"/>
-      </visual>
-      <collision>
-        <geometry>
-          <box size="0.02 0.02 0.02"/>
-        </geometry>
-        <origin xyz="0.0 0.0 0.05"/>
-      </collision>
-    </link> 
+    <!-- Kobuki arm 
+    Si el valor with_arm es yes se incorpora la información del brazo
+    en el modelo del robot.-->
+    <xacro:if value="${with_arm == 'yes'}">
+      <xacro:kobuki_arm tf_prefix="$(arg tf_prefix)" parent="base_link"/>
+    </xacro:if>
     
-    <joint name="arm_joint_L" type="prismatic">
-      <parent link="arm_link_4"/>
-      <child link="arm_link_L"/>
-      <origin xyz="0.0 0.005 0.0"/>
-      <axis xyz="0 1 0"/>
-      <limit effort="100" lower="0.0" upper="0.03" velocity="5"/>
-    </joint>
-
-    <link name="arm_link_L">
-      <visual>
-        <geometry>
-          <box size="0.02 0.01 0.04"/>
-        </geometry>
-        <origin xyz="0.0 0.0 0.03"/>
-        <material name="blue"/>
-      </visual>
-      <collision>
-        <geometry>
-          <box size="0.02 0.01 0.04"/>
-        </geometry>
-        <origin xyz="0.0 0.0 0.03"/>
-      </collision>
-    </link> 
-
-    <joint name="arm_joint_R" type="prismatic">
-      <parent link="arm_link_4"/>
-      <child link="arm_link_R"/>
-      <origin xyz="0.0 -0.005 0.0"/>
-      <axis xyz="0 -1 0"/>
-      <limit effort="100" lower="0.0" upper="0.03" velocity="5"/>
-    </joint>
-
-    <link name="arm_link_R">
-      <visual>
-        <geometry>
-          <box size="0.02 0.01 0.04"/>
-        </geometry>
-        <origin xyz="0.0 0.0 0.03"/>
-        <material name="blue"/>
-      </visual>
-      <collision>
-        <geometry>
-          <box size="0.02 0.01 0.04"/>
-        </geometry>
-        <origin xyz="0.0 0.0 0.03"/>
-      </collision>
-    </link>  -->
-
     <!---->
 
-    <!-- Kobuki's sensors -->
+    <!-- Kobuki sensors -->
     <joint name="gyro_joint" type="fixed">
       <axis xyz="0 1 0"/>
       <origin xyz="0.056 0.062 0.0202" rpy="0 0 0"/>
-      <parent link="base_link"/>
-      <child link="gyro_link"/>
+      <parent link="$(arg tf_prefix)/base_link"/>
+      <child link="$(arg tf_prefix)/gyro_link"/>
     </joint>
-    <link name="gyro_link">
+    <link name="$(arg tf_prefix)/gyro_link">
       <inertial>
         <mass value="0.001"/>
         <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -418,10 +215,10 @@
 
     <joint name="cliff_sensor_left_joint" type="fixed">
       <origin xyz="0.08734 0.13601 0.0214" rpy="0 ${M_PI/2} 0" />
-      <parent link="base_link"/>
-      <child link="cliff_sensor_left_link" />
+      <parent link="$(arg tf_prefix)/base_link"/>
+      <child link="$(arg tf_prefix)/cliff_sensor_left_link" />
     </joint>
-    <link name="cliff_sensor_left_link">
+    <link name="$(arg tf_prefix)/cliff_sensor_left_link">
       <inertial>
         <mass value="0.0001" />
         <origin xyz="0 0 0" />
@@ -433,10 +230,10 @@
 
     <joint name="cliff_sensor_right_joint" type="fixed">
       <origin xyz="0.085 -0.13601 0.0214" rpy="0 ${M_PI/2} 0" />
-      <parent link="base_link"/>
-      <child link="cliff_sensor_right_link" />
+      <parent link="$(arg tf_prefix)/base_link"/>
+      <child link="$(arg tf_prefix)/cliff_sensor_right_link" />
     </joint>
-    <link name="cliff_sensor_right_link">
+    <link name="$(arg tf_prefix)/cliff_sensor_right_link">
       <inertial>
         <mass value="0.0001" />
         <origin xyz="0 0 0" />
@@ -448,10 +245,10 @@
 
     <joint name="cliff_sensor_front_joint" type="fixed">
       <origin xyz="0.156 0.00 0.0214" rpy="0 ${M_PI/2} 0" />
-      <parent link="base_link"/>
-      <child link="cliff_sensor_front_link" />
+      <parent link="$(arg tf_prefix)/base_link"/>
+      <child link="$(arg tf_prefix)/cliff_sensor_front_link" />
     </joint>
-    <link name="cliff_sensor_front_link">
+    <link name="$(arg tf_prefix)/cliff_sensor_front_link">
       <inertial>
         <mass value="0.0001" />
         <origin xyz="0 0 0" />
@@ -462,7 +259,7 @@
     </link>
 
     <!-- Kobuki Gazebo simulation details -->
-    <kobuki_sim/>
+    <xacro:kobuki_sim tf_prefix="$(arg tf_prefix)"/>
 
   </xacro:macro>
 </robot>

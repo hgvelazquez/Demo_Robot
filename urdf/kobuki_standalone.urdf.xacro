@@ -7,5 +7,12 @@
 
   <!-- Defines the kobuki component tag. -->
   <xacro:include filename="$(find hola_tortuga)/urdf/kobuki.urdf.xacro" />
-  <kobuki/>
+  <!-- Argumentos necesarios para la posición inicial del robot,
+  su prefijo para diferenciarlo de los demás y si
+  es necesario usar el brazo robot o no -->
+  <arg name="x" default="0" />
+  <arg name="y" default="0" />
+  <arg name="tf_prefix" default="" />
+  <arg name="with_arm" default="no" />
+  <xacro:kobuki x="$(arg x)" y="$(arg y)" tf_prefix="$(arg tf_prefix)" with_arm="$(arg with_arm)" />
 </robot>

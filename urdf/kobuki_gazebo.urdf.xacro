@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 
 <robot name="kobuki_sim" xmlns:xacro="http://ros.org/wiki/xacro">
-  <xacro:macro name="kobuki_sim">
-	  <gazebo reference="wheel_left_link">
+  <xacro:macro name="kobuki_sim" params="tf_prefix">
+	  <gazebo reference="$(arg tf_prefix)/wheel_left_link">
 	    <mu1>1.0</mu1>
 	    <mu2>1.0</mu2>
 	    <kp>1000000.0</kp>
@@ -11,7 +11,7 @@
 	    <maxVel>1.0</maxVel>
 	  </gazebo>
 
-	  <gazebo reference="wheel_right_link">
+	  <gazebo reference="$(arg tf_prefix)/wheel_right_link">
 	    <mu1>1.0</mu1>
 	    <mu2>1.0</mu2>
 	    <kp>1000000.0</kp>
@@ -20,7 +20,7 @@
 	    <maxVel>1.0</maxVel>
 	  </gazebo>
 
-	  <gazebo reference="caster_front_link">
+	  <gazebo reference="$(arg tf_prefix)/caster_front_link">
 	    <mu1>0.0</mu1>
 	    <mu2>0.0</mu2>
 	    <kp>1000000.0</kp>
@@ -29,7 +29,7 @@
 	    <maxVel>1.0</maxVel>
 	  </gazebo>
 
-	  <gazebo reference="caster_back_link">
+	  <gazebo reference="$(arg tf_prefix)/caster_back_link">
 	    <mu1>0.0</mu1>
 	    <mu2>0.0</mu2>
 	    <kp>1000000.0</kp>
@@ -38,7 +38,7 @@
 	    <maxVel>1.0</maxVel>
 	  </gazebo>
 
-	  <gazebo reference="base_link">
+	  <gazebo reference="$(arg tf_prefix)/base_link">
 	    <mu1>0.3</mu1>
 	    <mu2>0.3</mu2>
 	    <sensor type="contact" name="bumpers">
@@ -51,7 +51,7 @@
 	    </sensor>
 	  </gazebo>
 
-	  <gazebo reference="cliff_sensor_left_link">
+	  <gazebo reference="$(arg tf_prefix)/cliff_sensor_left_link">
 	    <sensor type="ray" name="cliff_sensor_left">
 	      <always_on>true</always_on>
 	      <update_rate>50</update_rate>
@@ -82,7 +82,7 @@
 	    </sensor>
 	  </gazebo>
 
-	  <gazebo reference="cliff_sensor_right_link">
+	  <gazebo reference="$(arg tf_prefix)/cliff_sensor_right_link">
 	    <sensor type="ray" name="cliff_sensor_right">
 	      <always_on>true</always_on>
 	      <update_rate>50</update_rate>
@@ -113,7 +113,7 @@
 	    </sensor>
 	  </gazebo>
 
-	  <gazebo reference="cliff_sensor_front_link">
+	  <gazebo reference="$(arg tf_prefix)/cliff_sensor_front_link">
 	    <sensor type="ray" name="cliff_sensor_front">
 	      <always_on>true</always_on>
 	      <update_rate>50</update_rate>
@@ -144,7 +144,7 @@
 	    </sensor>
 	  </gazebo>
 
-	  <gazebo reference="gyro_link">
+	  <gazebo reference="$(arg tf_prefix)/gyro_link">
 	   <sensor type="imu" name="imu">
         <always_on>true</always_on>
         <update_rate>50</update_rate>

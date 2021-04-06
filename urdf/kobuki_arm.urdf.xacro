@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <robot name="kobuki_arm" xmlns:xacro="http://ros.org/wiki/xacro">
-	<xacro:macro name="kobuki_arm" params="parent">
+	<!-- En esta parte tomamos los valores de los parametros 
+	para el link padre del cual la descripción del robot
+	se fijará. -->
+	<xacro:macro name="kobuki_arm" params="tf_prefix parent">
 		<material name="blue">
 		<color rgba="0 0 1 1"/>
 		</material>
@@ -20,11 +23,11 @@
 
 		<joint name="arm_base_joint" type="fixed">
 		<origin xyz="0.065 0 0.089" rpy="0 0 0" />
-		<parent link="${parent}"/>
-		<child link="arm_base_link" />
+		<parent link="$(arg tf_prefix)/${parent}"/>
+		<child link="$(arg tf_prefix)/arm_base_link" />
 		</joint>
 
-		<link name="arm_base_link">
+		<link name="$(arg tf_prefix)/arm_base_link">
 		<visual>
 			<geometry>
 			<cylinder length="0.05" radius="0.07"/>
@@ -41,17 +44,15 @@
 		</collision>
 		</link>
 
-
 		<joint name="joint_arm_0" type="revolute">
-		<parent link="arm_base_link"/>
-		<child link="arm_link_0"/>
-		<origin xyz="0.0 0.0 0.05"/>
-		<axis xyz="0 0 1"/>
-		<limit effort="1000" lower="-3.14" upper="3.14" velocity="5"/>
+			<parent link="$(arg tf_prefix)/arm_base_link"/>
+			<child link="$(arg tf_prefix)/arm_link_0"/>
+			<origin xyz="0.0 0.0 0.05"/>
+			<axis xyz="0 0 1"/>
+			<limit effort="1000" lower="-3.14" upper="3.14" velocity="5"/>
 		</joint>
-
 		
-		<link name="arm_link_0">
+		<link name="$(arg tf_prefix)/arm_link_0">
 		<visual>
 			<geometry>
 			<box size="0.025 0.05 0.03"/>
@@ -70,14 +71,14 @@
 
 
 		<joint name="arm_joint_1" type="revolute">
-		<parent link="arm_link_0"/>
-		<child link="arm_link_1"/>
+		<parent link="$(arg tf_prefix)/arm_link_0"/>
+		<child link="$(arg tf_prefix)/arm_link_1"/>
 		<origin xyz="0.0 0.0 0.03"/>
 		<axis xyz="0 1 0"/>
 		<limit effort="1000" lower="-1.17" upper="1.17" velocity="5"/>
 		</joint>
 		
-		<link name="arm_link_1">
+		<link name="$(arg tf_prefix)/arm_link_1">
 		<visual>
 			<geometry>
 			<box size="0.02 0.02 0.11"/>
@@ -110,15 +111,15 @@
 
 
 		<joint name="arm_joint_2" type="revolute">
-		<parent link="arm_link_1"/>
-		<child link="arm_link_2"/>
+		<parent link="$(arg tf_prefix)/arm_link_1"/>
+		<child link="$(arg tf_prefix)/arm_link_2"/>
 		<origin xyz="0.03 0.0 0.09"/>
 		<axis xyz="0 1 0"/>
 		<limit effort="1000" lower="-3.14" upper="3.14" velocity="5"/>
 		</joint>
 
 
-		<link name="arm_link_2">
+		<link name="$(arg tf_prefix)/arm_link_2">
 		<visual>
 			<geometry>
 			<box size="0.02 0.02 0.11"/>
@@ -137,14 +138,14 @@
 
 
 		<joint name="arm_joint_3" type="revolute">
-		<parent link="arm_link_2"/>
-		<child link="arm_link_3"/>
+		<parent link="$(arg tf_prefix)/arm_link_2"/>
+		<child link="$(arg tf_prefix)/arm_link_3"/>
 		<origin xyz="0.0 0.0 0.09"/>
 		<axis xyz="0 1 0"/>
 		<limit effort="1000" lower="-3.14" upper="3.14" velocity="5"/>
 		</joint>
 
-		<link name="arm_link_3">
+		<link name="$(arg tf_prefix)/arm_link_3">
 		<visual>
 			<geometry>
 			<box size="0.02 0.02 0.13"/>
@@ -162,13 +163,13 @@
 
 
 		<joint name="arm_joint_4" type="fixed">
-		<parent link="arm_link_3"/>
-		<child link="arm_link_4"/>
+		<parent link="$(arg tf_prefix)/arm_link_3"/>
+		<child link="$(arg tf_prefix)/arm_link_4"/>
 		<origin xyz="0.0 0.0 0.13"/>
 		<axis xyz="0 0 1"/>
 		</joint>
 
-		<link name="arm_link_4">
+		<link name="$(arg tf_prefix)/arm_link_4">
 		<visual>
 			<geometry>
 			<box size="0.02 0.02 0.02"/>
@@ -185,14 +186,14 @@
 		</link> 
 		
 		<joint name="arm_joint_L" type="prismatic">
-		<parent link="arm_link_4"/>
-		<child link="arm_link_L"/>
+		<parent link="$(arg tf_prefix)/arm_link_4"/>
+		<child link="$(arg tf_prefix)/arm_link_L"/>
 		<origin xyz="0.0 0.005 0.0"/>
 		<axis xyz="0 1 0"/>
 		<limit effort="100" lower="0.0" upper="0.03" velocity="5"/>
 		</joint>
 
-		<link name="arm_link_L">
+		<link name="$(arg tf_prefix)/arm_link_L">
 		<visual>
 			<geometry>
 			<box size="0.02 0.01 0.04"/>
@@ -209,14 +210,14 @@
 		</link> 
 
 		<joint name="arm_joint_R" type="prismatic">
-		<parent link="arm_link_4"/>
-		<child link="arm_link_R"/>
+		<parent link="$(arg tf_prefix)/arm_link_4"/>
+		<child link="$(arg tf_prefix)/arm_link_R"/>
 		<origin xyz="0.0 -0.005 0.0"/>
 		<axis xyz="0 -1 0"/>
 		<limit effort="100" lower="0.0" upper="0.03" velocity="5"/>
 		</joint>
 
-		<link name="arm_link_R">
+		<link name="$(arg tf_prefix)/arm_link_R">
 		<visual>
 			<geometry>
 			<box size="0.02 0.01 0.04"/>
