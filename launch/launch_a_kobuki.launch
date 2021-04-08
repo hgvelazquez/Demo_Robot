@@ -2,8 +2,14 @@
 <launch>
     <!--Como se usa arg: http://wiki.ros.org/roslaunch/XML/arg
         Declaramos la existencia de las variables urdf_file y robot_name -->
-    <arg name="urdf_file"/>
-    <arg name="robot_name"/>
+    
+    <arg name="x" default="0" />
+    <arg name="y" default="0" />
+    <arg name="robot_name" default="" />
+    <arg name="with_arm" default="no" />
+    <arg name="urdf_file" default="$(find xacro)/xacro '$(find hola_tortuga)/urdf/kobuki_standalone.urdf.xacro' x:=$(arg x) y:=$(arg y) tf_prefix:=$(arg robot_name)_tf with_arm:=$(arg with_arm)" />
+    <param name="robot_description" command="$(arg urdf_file)" />
+
 
     <!-- Como se usa param: http://wiki.ros.org/roslaunch/XML/param
         De define un parametro para ser fijado en el Servidor de parametros(Parameter Server)
@@ -19,17 +25,20 @@
         <!-- Como se usa rosparam: http://wiki.ros.org/roslaunch/XML/rosparam
             Cargamos los parametros definidos en el archivo base.yaml -->
         <rosparam file="$(find kobuki_softnode)/param/base.yaml" command="load"/>
-        
-        <param name="base_frame" type="string"  value="$(arg robot_name)_tf/base_footprint"/>
+
+        <!-- Remap needed to use the custom tf_prefix -->
+        <param name="odom_frame" type="string" value="$(arg robot_name)_tf/odom"/>
+        <param name="base_frame" type="string" value="$(arg robot_name)_tf/base_footprint"/>
         
         <!-- Como se usa remap: http://wiki.ros.org/roslaunch/XML/remap 
             Pero como además este launch se ejecuta dentro de un grupo en el archivo
             inicia_tortugas.launch al final quedan mapeados con el prefijo de ese grupo
             más el valor al que se hace el remap -->
-        <remap from="mobile_base/odom" to="/$(arg robot_name)/odom"/>
-        <remap from="mobile_base/enable" to="enable"/>
-        <remap from="mobile_base/disable" to="disable"/>
-        <remap from="mobile_base/joint_states" to="/$(arg robot_name)/joint_states"/> 
+        <remap from="mobile_base/odom" to="$(arg robot_name)/odom"/>
+        <remap from="mobile_base/enable" to="$(arg robot_name)/enable"/>
+        <remap from="mobile_base/disable" to="$(arg robot_name)/disable"/>
+        <!-- <remap from="mobile_base/joint_states" to="$(arg robot_name)/joint_states"/>  -->
+        <!-- <remap from="mobile_base/joint_states" to="joint_states"/> -->
     </node>
 
     <!--
@@ -41,21 +50,23 @@
     </node> 
     -->
 
+    <!-- Necesitamos esto para que se desplieguen los cambios de estado del robot, 
+        este publica información que usa robot_state_publisher
+    Para saber más: http://wiki.ros.org/joint_state_publisher -->
+    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" output="screen">
+        <!-- <rosparam param="source_list">["joint_states_interpolated"]</rosparam> -->
+        <param name="publish_frequency" type="double" value="30.0" />
+        <!-- <remap from="joint_states" to="$(arg robot_name)/joint_states"/> -->
+    </node>
+
+
     <!-- Necesitamos esto para que se desplieguen los cambios de estado del robot
     Para saber más: http://wiki.ros.org/robot_state_publisher -->
     <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher" output="screen">
         <param name="publish_frequency" type="double" value="30.0" />
-        <param name="tf_prefix" value="$(arg robot_name)_tf"/>
+        <!-- <param name="tf_prefix" type="string" value="$(arg robot_name)_tf"/> -->
     </node>
 
-    <!-- Necesitamos esto para que se desplieguen los cambios de estado del robot, 
-        este publica información que usa robot_state_publisher
-    Para saber más: http://wiki.ros.org/joint_state_publisher -->
-    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
-        <rosparam param="source_list">["joint_states_interpolated"]</rosparam>
-        <param name="publish_frequency" type="double" value="30.0" />
-        <param name="tf_prefix" type="string" value="$(arg robot_name)_tf"/>
-    </node>
 
     <!--
         ###############################################################################
@@ -72,8 +83,8 @@
     -->
     <node pkg="hola_tortuga" type="campos" name="campos_tortuga" >
         <param name="robot_name" type="string" value="$(arg robot_name)"/>
-        <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
-        <remap from="/a_star_goal" to="motion/a_star_goal"/>
+        <remap from="HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
+        <remap from="a_star_goal" to="motion/a_star_goal"/>
     </node>
     <!-- 
         NAVEGACIÓN 

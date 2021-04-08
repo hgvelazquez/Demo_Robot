@@ -1,46 +1,58 @@
 <launch>
     <group ns="group1">
-        Para saber más revisar el archivo que se incluye 
+        <!-- Para saber más revisar el archivo que se incluye  -->
         <include file="$(find hola_tortuga)/launch/launch_a_kobuki.launch">
             <!-- Argumentos que recibe el archivo launch 
             Si no se reciben argumentos al correr el archivo se toman los que están dados por default
             Referencia para entender un poco mejor los xacros: https://www.youtube.com/watch?v=NK7lIjYcSYU-->
-            <arg name="urdf_file" default="$(find xacro)/xacro '$(find kobuki_description)/urdf/kobuki_standalone.urdf.xacro'" />
-            <arg name="robot_name" default="robot_1" />
+            <arg name="x" default="5" />
+            <arg name="y" default=".5" />
+            <arg name="robot_name" default="robot1" />
+            <arg name="with_arm" default="yes" />
         </include>
     </group>
 
     <group ns="group2">
         <include file="$(find hola_tortuga)/launch/launch_a_kobuki.launch">
-            <arg name="urdf_file" default="$(find xacro)/xacro '$(find hola_tortuga)/urdf/kobuki_standalone.urdf.xacro'" />
+            <arg name="x" default="6" />
+            <arg name="y" default=".5" />
+            <arg name="with_arm" default="yes" />
             <arg name="robot_name" default="robot_2" />
         </include>
     </group>
 
     <group ns="group3">
         <include file="$(find hola_tortuga)/launch/launch_a_kobuki.launch">
-            <arg name="urdf_file" default="$(find xacro)/xacro '$(find hola_tortuga)/urdf/kobuki_standalone.urdf.xacro'" />
+            <arg name="x" default="7" />
+            <arg name="y" default=".5" />
+            <arg name="with_arm" default="yes" />
             <arg name="robot_name" default="robot_3" />
         </include>
     </group>
 
     <group ns="group4">
         <include file="$(find hola_tortuga)/launch/launch_a_kobuki.launch">
-            <arg name="urdf_file" default="$(find xacro)/xacro '$(find hola_tortuga)/urdf/kobuki_standalone.urdf.xacro'" />
+            <arg name="x" default="-5" />
+            <arg name="y" default=".5" />
+            <arg name="with_arm" default="yes" />
             <arg name="robot_name" default="robot_4" />
         </include>
     </group>
 
     <group ns="group5">
         <include file="$(find hola_tortuga)/launch/launch_a_kobuki.launch">
-            <arg name="urdf_file" default="$(find xacro)/xacro '$(find hola_tortuga)/urdf/kobuki_standalone.urdf.xacro'" />
+            <arg name="x" default="-6" />
+            <arg name="y" default="0.5" />
+            <arg name="with_arm" default="yes" />
             <arg name="robot_name" default="robot_5" />
         </include>
     </group>
 
     <group ns="group6">
         <include file="$(find hola_tortuga)/launch/launch_a_kobuki.launch">
-            <arg name="urdf_file" default="$(find xacro)/xacro '$(find hola_tortuga)/urdf/kobuki_standalone.urdf.xacro'" />
+            <arg name="x" default="-7" />
+            <arg name="y" default=".5" />
+            <arg name="with_arm" default="yes" />
             <arg name="robot_name" default="robot_6" />
         </include>
     </group>
@@ -50,7 +62,9 @@
 
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(arg rvizconfig)" required="true" />
 	
-	<node pkg="hola_tortuga" type="map" name="mapa_tortuga" ></node>
+	<node pkg="hola_tortuga" type="map" name="mapa_tortuga" >
+        <remap from="odom" to="start"/>
+    </node>
     <!-- <node pkg="hola_tortuga" type="targets" name="objetivos_tortuga" ></node> -->
     
     <!-- <node pkg="hola_tortuga" type="Mover_Brazo.py" name="mover_brazo_tortuga" output="screen"></node>
