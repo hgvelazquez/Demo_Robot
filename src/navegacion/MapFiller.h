@@ -224,7 +224,7 @@ void mapRPYOrientation(nav_msgs::OccupancyGrid& map, float x, float y, float z){
  */
 void mapHeader(nav_msgs::OccupancyGrid& map){
     // La información del mapa.
-    // map.header.frame_id = "/odom";
+    // map.header.frame_id = "start";
     // map.header.stamp = ros::Time::now();   // No caduca
     // map.info.resolution = RESOLUTION;     // [m/cell]
     // map.info.width = WIDTH;               // [cells]
@@ -238,7 +238,7 @@ void mapHeader(nav_msgs::OccupancyGrid& map){
     // map.info.origin.orientation.w = 1.0;
 
     // // La información del mapa.
-    map.header.frame_id = "/odom";
+    map.header.frame_id = "start";
     map.header.stamp = ros::Time::now();   // No caduca
     mapDimensions(map, RESOLUTION, WIDTH, HEIGHT);
     mapOrigin(map, (WIDTH/2.0), (DOOR_END - 1), 0);
@@ -505,7 +505,7 @@ visualization_msgs::MarkerArray addTables(nav_msgs::OccupancyGrid& map)
     /* Setting common variables for the tables.*/
     int number_tables = tables.markers.size();
     for(int i = 0; i<number_tables; i++){
-        tables.markers[i].header.frame_id = "/odom";
+        tables.markers[i].header.frame_id = "start";
         tables.markers[i].id = i;
         tables.markers[i].header.stamp = ros::Time();
         tables.markers[i].type = visualization_msgs::Marker::CUBE;
@@ -591,7 +591,7 @@ visualization_msgs::MarkerArray addTables(nav_msgs::OccupancyGrid& map)
  
     /* Setting common variables for each table leg. */ 
     for(int i = number_tables; i<tables.markers.size(); i++) {
-        tables.markers[i].header.frame_id = "/odom";
+        tables.markers[i].header.frame_id = "start";
         tables.markers[i].id = i;
         tables.markers[i].header.stamp = ros::Time();
         tables.markers[i].type = visualization_msgs::Marker::CUBE;
