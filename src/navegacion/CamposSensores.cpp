@@ -287,7 +287,7 @@ visualization_msgs::Marker drawSpeed(geometry_msgs::Twist vel)
     visualization_msgs::Marker nav_sensor;
     //General data of the Vector
     nav_sensor.id = 100; // Más que cualquier número de sensores.
-    nav_sensor.header.frame_id = ("/"+s+"_tf/base_link").c_str();
+    nav_sensor.header.frame_id = (s+"_tf/base_link").c_str();
     nav_sensor.header.stamp = ros::Time::now();   // No caduca
     nav_sensor.ns = "vel";
     nav_sensor.type = visualization_msgs::Marker::ARROW;
@@ -406,11 +406,11 @@ int main (int argc, char** argv)
     ros::Publisher vector_marker = n.advertise<visualization_msgs::Marker>("vector_marker", 10);
     ros::Publisher nav_velocity_pub = n.advertise<geometry_msgs::Twist>("/HOLA/mobile_base/commands/velocity", 1);
     
-    ros::Subscriber sub_odom = n.subscribe(("/"+s+"/odom").c_str(), 5, updateSensors);
-    ROS_INFO("CamposSensores.cpp: suscribed to: %s", ("/"+s+"/odom").c_str()); 
+    ros::Subscriber sub_odom = n.subscribe("odom", 5, updateSensors);// ("odom").c_str()
+    ROS_ERROR("CamposSensores.cpp: suscribed to: %s", ("/"+s+"/odom").c_str()); 
     
     ros::Subscriber sub_map = n.subscribe("/occupancy_map", 5, getMapParams);
-    ros::Subscriber nav_sub = n.subscribe("/a_star_goal", 1, nav_receiveNavGoal);
+    ros::Subscriber nav_sub = n.subscribe("a_star_goal", 1, nav_receiveNavGoal);
 
     // Estado inicial de las variables.
     have_map = false;

@@ -84,7 +84,8 @@
     <node pkg="hola_tortuga" type="campos" name="campos_tortuga" >
         <param name="robot_name" type="string" value="$(arg robot_name)"/>
         <remap from="HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
-        <remap from="a_star_goal" to="motion/a_star_goal"/>
+        <remap from="campos_tortuga/a_star_goal" to="motion/a_star_goal"/>
+        <remap from="campos_tortuga/odom" to="$(arg robot_name)/odom"/>
     </node>
     <!-- 
         NAVEGACIÓN 
