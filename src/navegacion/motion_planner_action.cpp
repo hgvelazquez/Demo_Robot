@@ -44,6 +44,7 @@ protected:
     move_base_msgs::MoveBaseResult result_;
 
 
+
     /* Variables para construir y guardar la gráfica de Voronoi. */
     // El mapa con la información de obstáculos.
     nav_msgs::OccupancyGrid MAP;
@@ -74,6 +75,8 @@ protected:
 
     /* Variable que utilizamos para obtener los parametros. */
     std::string s;
+    double INITIAL_X;
+    double INITIAL_Y;
 
     /* Tópicos donde publicaremos. */
     ros::Publisher a_star_pub;
@@ -121,6 +124,8 @@ protected:
     void updatePoint(const nav_msgs::Odometry::ConstPtr& msg){
         nav_msgs::Odometry od = *msg;
         kob_pose = od.pose.pose;
+        kob_pose.position.x += INITIAL_X;
+        kob_pose.position.y += INITIAL_Y;
         // Si ya enviamos la meta, no tenemos que actualizar nada ya. 
         if (sent_goal == 0) {
             float dx = kob_pose.position.x - next.x;
@@ -442,6 +447,9 @@ public:
         if (!nh_.hasParam("robot_name"))
         {
             ROS_ERROR("Motion_planner_action.cpp: No param named 'robot_name'");
+            s = "";
+            INITIAL_X = 0;
+            INITIAL_Y = 0;
         }
 
         if (nh_.getParam("robot_name", s))
@@ -454,6 +462,26 @@ public:
         }
         action_name_ = "/"+s+"/"+name;
 
+        if (nh_.getParam("x", INITIAL_X))
+        {
+            ROS_ERROR("CamposSensores.cpp: Got param %lf", INITIAL_X);
+        }
+        else
+        {
+            ROS_ERROR("CamposSensores.cpp: Failed to get param 'x'");
+            INITIAL_X = 0;
+        }
+
+        if (nh_.getParam("y", INITIAL_Y))
+        {
+            ROS_ERROR("CamposSensores.cpp: Got param %lf", INITIAL_Y);
+        }
+        else
+        {
+            ROS_ERROR("CamposSensores.cpp: Failed to get param 'y'");
+            INITIAL_Y = 0;
+        }
+
         as_ = new actionlib::SimpleActionServer<move_base_msgs::MoveBaseAction>(ros::NodeHandle(), action_name_, boost::bind(&NavigationAction::executeCB, this, _1), false);
         as_->start();
         
@@ -464,7 +492,7 @@ public:
         
         // Tópicos donde escucharemos.
         nav_sub = nh_.subscribe<geometry_msgs::PoseStamped>(("/"+s+"/move_base_simple/goal").c_str(), 5, boost::bind(&NavigationAction::receiveNavGoal, this, _1));
-        odom_sub = nh_.subscribe<nav_msgs::Odometry>(("/"+s+"/odom").c_str(), 5, boost::bind(&NavigationAction::updatePoint, this, _1));
+        odom_sub = nh_.subscribe<nav_msgs::Odometry>("odom", 5, boost::bind(&NavigationAction::updatePoint, this, _1));
         map_sub = nh_.subscribe<nav_msgs::OccupancyGrid>("/voronoi_info", 5, boost::bind(&NavigationAction::getMapParams, this, _1));
 
         ROS_INFO("Motion_planer_action.cpp: suscribed to: %s", ("/"+s+"/move_base_simple/goal").c_str());
@@ -500,14 +528,14 @@ public:
         sent_goal = 0;
         
         // Obtenemos la celda en la que se encuentra la KOBUKI.
-        int u = floor((kob_pose.position.x - origin_x)/RESOLUTION);
-        int w = floor((kob_pose.position.y - origin_y)/RESOLUTION);
+        int u = floor((kob_pose.position.x - (origin_x))/RESOLUTION);
+        int w = floor((kob_pose.position.y - (origin_y))/RESOLUTION);
         ROS_INFO("Motion_planner_action.cpp [%s] YOU ARE AT: %d, %d\n", s.c_str(), u, w);
         
         // Obtenemos la celda a la que queremos llegar. 
-        int x = floor((goal.x - origin_x)/RESOLUTION);
-        int y = floor((goal.y - origin_y)/RESOLUTION);
-        ROS_INFO("Motion_planner_action.cpp [%s] GOING TO : %d, %d\n", s.c_str(), x, y);
+        int x = floor((goal.x - (origin_x))/RESOLUTION);
+        int y = floor((goal.y - (origin_y))/RESOLUTION);
+        ROS_INFO("Motion_planner_action.cpp [%s] GOING TO : %d, %d\n", s.c_str(),x, y);
         
         // Obtenemos los vértices más cerecanos a ambas celdas.
         Vertice* inic = nearest_voronoi[u + w*WIDTH];

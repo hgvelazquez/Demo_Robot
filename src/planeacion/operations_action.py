@@ -31,7 +31,7 @@ if __name__ == "__main__":
         
     rospy.init_node('send_goal')
 
-    navclient = actionlib.SimpleActionClient('/robot_1/motion_planner_action',MoveBaseAction)
+    navclient = actionlib.SimpleActionClient('/robot_3/motion_planner_action',MoveBaseAction)
     navclient.wait_for_server()
 
     # Example of navigation goal

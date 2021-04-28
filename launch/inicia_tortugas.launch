@@ -7,7 +7,7 @@
             Referencia para entender un poco mejor los xacros: https://www.youtube.com/watch?v=NK7lIjYcSYU-->
             <arg name="x" default="5" />
             <arg name="y" default=".5" />
-            <arg name="robot_name" default="robot1" />
+            <arg name="robot_name" default="robot_1" />
             <arg name="with_arm" default="yes" />
         </include>
     </group>

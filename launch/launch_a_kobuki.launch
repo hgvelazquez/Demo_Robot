@@ -83,6 +83,8 @@
     -->
     <node pkg="hola_tortuga" type="campos" name="campos_tortuga" >
         <param name="robot_name" type="string" value="$(arg robot_name)"/>
+        <param name="x" type="double" value="$(arg x)"/>
+        <param name="y" type="double" value="$(arg y)"/>
         <remap from="HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
         <remap from="campos_tortuga/a_star_goal" to="motion/a_star_goal"/>
         <remap from="campos_tortuga/odom" to="$(arg robot_name)/odom"/>
@@ -99,6 +101,9 @@
     -->
     <node pkg="hola_tortuga" type="motion_planner_action" name="motion" output="screen">
         <param name="robot_name" type="string" value="$(arg robot_name)"/>
+        <param name="x" type="double" value="$(arg x)"/>
+        <param name="y" type="double" value="$(arg y)"/>
+        <remap from="motion/odom" to="$(arg robot_name)/odom"/>
         <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
     </node>
 

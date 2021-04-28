@@ -38,6 +38,8 @@ bool changed_goal;
 const int SENSOR_NUMBER = 18; // Número de sensores que se dibujarán a la kobuki
 Sensor SENSORS[SENSOR_NUMBER]; // Arreglo con los sensores
 std::string s;
+double INITIAL_X;
+double INITIAL_Y;
 
 /**
  * Función que se encarga de crear los sensores que tendrá 
@@ -102,6 +104,8 @@ void updateSensors(const nav_msgs::Odometry::ConstPtr& msg)
     geometry_msgs::Pose pose;
     nav_msgs::Odometry od = *msg;
     pose = od.pose.pose;
+    pose.position.x += INITIAL_X;
+    pose.position.y += INITIAL_Y;
     tf2::Quaternion q(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
     q.normalize();
     // Actualizamos la información de los sensores. 
@@ -287,7 +291,7 @@ visualization_msgs::Marker drawSpeed(geometry_msgs::Twist vel)
     visualization_msgs::Marker nav_sensor;
     //General data of the Vector
     nav_sensor.id = 100; // Más que cualquier número de sensores.
-    nav_sensor.header.frame_id = (s+"_tf/base_link").c_str();
+    nav_sensor.header.frame_id = (s+"_tf/base_footprint").c_str();
     nav_sensor.header.stamp = ros::Time::now();   // No caduca
     nav_sensor.ns = "vel";
     nav_sensor.type = visualization_msgs::Marker::ARROW;
@@ -331,11 +335,11 @@ visualization_msgs::MarkerArray drawSensors()
 
         //General data of the Line
         if (s == ""){
-            current_sensor.header.frame_id = "/base_link"; // En coordenadas de la KOBUKI.
+            current_sensor.header.frame_id = "/base_footprint"; // En coordenadas de la KOBUKI.
             //ROS_ERROR("CamposSensores.cpp: current sensor : /base_link");
         }else
         {
-            current_sensor.header.frame_id = s+"_tf/base_link"; // En coordenadas de la KOBUKI.
+            current_sensor.header.frame_id = s+"_tf/base_footprint"; // En coordenadas de la KOBUKI.
             //ROS_ERROR("CamposSensores.cpp: current sensor : %s", ("/"+s+"_tf/base_link").c_str());   
         }
         
@@ -388,6 +392,8 @@ int main (int argc, char** argv)
     {
         ROS_ERROR("CamposSensores.cpp: No param named 'robot_name'");
         s = "";
+        INITIAL_X = 0;
+        INITIAL_Y = 0;
     }
 
     if (n.getParam("robot_name", s))
@@ -399,6 +405,27 @@ int main (int argc, char** argv)
       ROS_ERROR("CamposSensores.cpp: Failed to get param 'robot_name'");
       s = "";
     }
+
+    if (n.getParam("x", INITIAL_X))
+    {
+      ROS_ERROR("CamposSensores.cpp: Got param %lf", INITIAL_X);
+    }
+    else
+    {
+      ROS_ERROR("CamposSensores.cpp: Failed to get param 'x'");
+      INITIAL_X = 0;
+    }
+
+    if (n.getParam("y", INITIAL_Y))
+    {
+      ROS_ERROR("CamposSensores.cpp: Got param %lf", INITIAL_Y);
+    }
+    else
+    {
+      ROS_ERROR("CamposSensores.cpp: Failed to get param 'y'");
+      INITIAL_Y = 0;
+    }
+
 
   
     // Los tópicos donde publicaremos.
