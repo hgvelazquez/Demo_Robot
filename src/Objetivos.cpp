@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include "LogHeader.h"
 
 /** Variables denotando las posiciones de los obstáculos en el mapa.*/ 
 const int WIDTH = 27;           // A lo largo del eje rojo x --- 15/0.3 = 4.5 mts

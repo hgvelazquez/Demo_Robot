@@ -1,5 +1,7 @@
 /* Nodo que se encarga de ir mandando las metas intermedias para mover al robot.*/
 #include <ros/ros.h>
+#include <ros/console.h>
+
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <nav_msgs/OccupancyGrid.h>
@@ -27,8 +29,9 @@
 #include "Grafica.h"
 #include "MapFiller.h"
 #include "Voronoi_Utils.h"
+#include "../LogHeader.h"
 
-
+using std::vector;
 
 class NavigationAction
 {
@@ -74,14 +77,17 @@ protected:
     bool received_map;  
 
     /* Variable que utilizamos para obtener los parametros. */
-    std::string s;
+    string m_robot_name;
     double INITIAL_X;
     double INITIAL_Y;
+    int DEBUG;
+    LogHeader m_logheader;
 
     /* Tópicos donde publicaremos. */
     ros::Publisher a_star_pub;
     ros::Publisher rotate_pub;
     ros::Publisher finished_pub;
+    ros::Publisher path_pub;
     
     /* Tópicos donde escucharemos. */
     ros::Subscriber nav_sub;
@@ -126,6 +132,8 @@ protected:
         kob_pose = od.pose.pose;
         kob_pose.position.x += INITIAL_X;
         kob_pose.position.y += INITIAL_Y;
+        m_logheader.debugOnce("x: "+to_string(kob_pose.position.x)+" y: "+to_string(kob_pose.position.y));
+        
         // Si ya enviamos la meta, no tenemos que actualizar nada ya. 
         if (sent_goal == 0) {
             float dx = kob_pose.position.x - next.x;
@@ -196,6 +204,39 @@ protected:
             return 0;
         }
     }
+
+    /**
+     * 
+     * 
+     */
+    nav_msgs::OccupancyGrid get_Astar_graph(nav_msgs::OccupancyGrid MAP, int src_x, int src_y, int dest_x, int dest_y){
+        // Obtenemos la información del mapa para fácil escritura.  
+        int HEIGHT = MAP.info.height;
+        int WIDTH = MAP.info.width;
+        vector<int8_t> data = MAP.data; 
+        vector<bool> visited (MAP.data.size(),false); 
+        vector<int> dist_src (MAP.data.size(),0);
+        vector<int> h_dist_dest (MAP.data.size(),0);
+        vector<int> f_sum_dist (MAP.data.size(),0);
+
+        m_logheader.info("src: x: "+to_string(src_x)+" y: "+to_string(src_y));
+        m_logheader.info("src: x: "+to_string(dest_x)+" y: "+to_string(dest_y));
+
+        data[src_x + src_y*WIDTH];
+        // string s = "";
+
+        // for(int i = 0; i < HEIGHT; i++){
+        //     for (int j = 0; j < WIDTH; j++){
+        //         s += to_string(data[i + j*WIDTH]);
+        //     }
+        //     s += "\n";
+        // }
+
+
+        MAP.data = data;
+        
+        return MAP;
+    } 
 
     /**
      * Función para cpnstruir la gráfica de VORONOI.
@@ -400,8 +441,8 @@ protected:
      */
     void receiveNavGoal(const geometry_msgs::PoseStamped::ConstPtr& poseStamped)
     {
-        //ROS_INFO("Motion_planer.cpp: suscribed to: %s", ("/"+s+"/move_base_simple/goal").c_str());
-        ROS_INFO("motion_planner_action.cpp [%s] : receivedGoal",s.c_str());
+        m_logheader.debug("Received Goal!");
+
         // Sacamos el ancho para escribirlo más fácilmente.
         int WIDTH = MAP.info.width;
         
@@ -411,76 +452,82 @@ protected:
         // Obtenemos la celda en la que se encuentra la KOBUKI.
         int u = floor((kob_pose.position.x - origin_x)/RESOLUTION);
         int w = floor((kob_pose.position.y - origin_y)/RESOLUTION);
-        ROS_INFO("motion_planner_action.cpp [%s] YOU ARE AT: %d, %d\n", s.c_str(), u, w);
+        // ROS_INFO(m_logheader.getHeader("YOU ARE AT: %d, %d\n", u, w).c_str());
+        m_logheader.debug("YOU ARE AT x:"+to_string(u)+", y:"+to_string(w));
         
         // Obtenemos la celda a la que queremos llegar. 
         int x = floor((goal.x - origin_x)/RESOLUTION);
         int y = floor((goal.y - origin_y)/RESOLUTION);
-        ROS_INFO("motion_planner_action.cpp [%s] GOING TO : %d, %d\n", s.c_str(), x, y);
+        // ROS_INFO(m_logheader.getHeader("GOING TO : %d, %d\n", x, y).c_str());
+        m_logheader.debug("GOING TO x:"+to_string(x)+", y:"+to_string(y));
+
         
         // Obtenemos los vértices más cerecanos a ambas celdas.
         Vertice* inic = nearest_voronoi[u + w*WIDTH];
         Vertice* fin = nearest_voronoi[x + y*WIDTH];
         
         
-        ROS_INFO("Motion_planner_action.cpp [%s] INIC: %d, %d\n", s.c_str(), inic->x, inic->y);
-        ROS_INFO("Motion_planner_action.cpp [%s] : %2.3f, %2.3f\n", s.c_str(), getPoint(inic).x, getPoint(inic).y);
-        ROS_INFO("Motion_planner_action.cpp [%s] END:  %d, %d\n", s.c_str(), fin->x, fin->y);
-        ROS_INFO("Motion_planner_action.cpp [%s] : %2.3f, %2.3f\n", s.c_str(), getPoint(fin).x, getPoint(fin).y);
+        // ROS_INFO(m_logheader.getHeader("INIC: %d, %d\n", inic->x, inic->y).c_str());
+        // ROS_INFO(m_logheader.getHeader("%2.3f, %2.3f\n", getPoint(inic).x, getPoint(inic).y).c_str());
+        // ROS_INFO(m_logheader.getHeader("END:  %d, %d\n", fin->x, fin->y).c_str());
+        // ROS_INFO(m_logheader.getHeader("%2.3f, %2.3f\n", getPoint(fin).x, getPoint(fin).y).c_str());
         // Obtenemos la ruta en la gráfica con A*.
         std::stack<Vertice*> a = AStar(VORONOI_GRAPH, inic, fin); 
 
         a_star_route = a;
         next = getPoint(a_star_route.top());
         
-        ROS_INFO("Motion_planner_action.cpp [%s] NEXT: %d, %d\n", s.c_str(), a_star_route.top()->x, a_star_route.top()->y);
+        // ROS_INFO(m_logheader.getHeader("NEXT: %d, %d\n", a_star_route.top()->x, a_star_route.top()->y).c_str());
         almost = false;
         reached_last = false;
         turn = 0;
     }
 
-public:
-
-    NavigationAction(std::string name)
-        {
-        // Recibimos los argumentos para obtener el nombre del robot
+    void readParams(string name){
+        m_robot_name = "";
+        INITIAL_X = 0;
+        INITIAL_Y = 0;
+        DEBUG = 0;
         if (!nh_.hasParam("robot_name"))
-        {
-            ROS_ERROR("Motion_planner_action.cpp: No param named 'robot_name'");
-            s = "";
-            INITIAL_X = 0;
-            INITIAL_Y = 0;
-        }
+            m_logheader.error("No param named 'robot_name'");
 
-        if (nh_.getParam("robot_name", s))
-        {
-            ROS_INFO("Motion_planner_action.cpp: Got param: %s", s.c_str());
+        if (nh_.getParam("robot_name", m_robot_name)){
+            m_logheader.info("Got param: "+m_robot_name);
+            action_name_ = "/"+m_robot_name+"/"+name;
+            m_logheader.m_robot_id = m_robot_name;
         }
-        else
-        {
-            ROS_ERROR("Motion_planner_action.cpp: Failed to get param 'robot_name'");
+        else {
+            m_logheader.error("Failed to get param 'robot_name'");
+            action_name_ = "/"+name;
         }
-        action_name_ = "/"+s+"/"+name;
 
         if (nh_.getParam("x", INITIAL_X))
-        {
-            ROS_ERROR("CamposSensores.cpp: Got param %lf", INITIAL_X);
-        }
+            m_logheader.info("Got param "+to_string(INITIAL_X));
         else
-        {
-            ROS_ERROR("CamposSensores.cpp: Failed to get param 'x'");
-            INITIAL_X = 0;
-        }
+            m_logheader.error("Failed to get param 'x'");
 
         if (nh_.getParam("y", INITIAL_Y))
-        {
-            ROS_ERROR("CamposSensores.cpp: Got param %lf", INITIAL_Y);
-        }
+            m_logheader.info("Got param "+to_string(INITIAL_Y));
         else
-        {
-            ROS_ERROR("CamposSensores.cpp: Failed to get param 'y'");
-            INITIAL_Y = 0;
-        }
+            m_logheader.error("Failed to get param 'y'");
+
+        if (nh_.getParam("debug", DEBUG))
+            m_logheader.info("Got param %d"+to_string(DEBUG));
+            if(DEBUG){
+                if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+                    ros::console::notifyLoggerLevelsChanged();
+                }
+            }
+        else
+            m_logheader.error("Failed to get param 'debug'");
+    }
+
+public:
+
+    NavigationAction(std::string name){
+        m_logheader.m_file = "Motion_planner_action.cpp";
+        // Recibimos los argumentos para obtener el nombre del robot
+        readParams(name);
 
         as_ = new actionlib::SimpleActionServer<move_base_msgs::MoveBaseAction>(ros::NodeHandle(), action_name_, boost::bind(&NavigationAction::executeCB, this, _1), false);
         as_->start();
@@ -488,15 +535,16 @@ public:
 
         // Tópicos donde publicaremos.
         a_star_pub = nh_.advertise<geometry_msgs::Point>("a_star_goal", 5);
-        rotate_pub = nh_.advertise<geometry_msgs::Twist>("/HOLA/mobile_base/commands/velocity", 1);
+        rotate_pub = nh_.advertise<geometry_msgs::Twist>("/dummy/mobile_base/commands/velocity", 1);
+        path_pub = nh_.advertise<nav_msgs::OccupancyGrid>("path_info", 1);
         
         // Tópicos donde escucharemos.
-        nav_sub = nh_.subscribe<geometry_msgs::PoseStamped>(("/"+s+"/move_base_simple/goal").c_str(), 5, boost::bind(&NavigationAction::receiveNavGoal, this, _1));
+        nav_sub = nh_.subscribe<geometry_msgs::PoseStamped>(("/"+m_robot_name+"/move_base_simple/goal").c_str(), 5, boost::bind(&NavigationAction::receiveNavGoal, this, _1));
         odom_sub = nh_.subscribe<nav_msgs::Odometry>("odom", 5, boost::bind(&NavigationAction::updatePoint, this, _1));
         map_sub = nh_.subscribe<nav_msgs::OccupancyGrid>("/voronoi_info", 5, boost::bind(&NavigationAction::getMapParams, this, _1));
 
-        ROS_INFO("Motion_planer_action.cpp: suscribed to: %s", ("/"+s+"/move_base_simple/goal").c_str());
-        ROS_INFO("Motion_planer_action.cpp: suscribed to: %s", ("/"+s+"/odom").c_str());
+        m_logheader.info("suscribed to: /"+m_robot_name+"/move_base_simple/goal");
+        m_logheader.info("suscribed to: /"+m_robot_name+"/odom");
 
         ros::Rate r(10);
         received_map = false;
@@ -519,40 +567,47 @@ public:
 
     void executeCB(const move_base_msgs::MoveBaseGoalConstPtr& moveBaseGoal)
     {
-        //ROS_INFO("Motion_planer.cpp: suscribed to: %s", ("/"+s+"/move_base_simple/goal").c_str());
-        ROS_INFO("Motion_planner_action.cpp [%s] : receivedGoal",s.c_str());
+        m_logheader.info("receivedGoal!");
         // Sacamos el ancho para escribirlo más fácilmente.
         int WIDTH = MAP.info.width;
         
+
+
         goal = moveBaseGoal->target_pose.pose.position;
         sent_goal = 0;
         
         // Obtenemos la celda en la que se encuentra la KOBUKI.
         int u = floor((kob_pose.position.x - (origin_x))/RESOLUTION);
         int w = floor((kob_pose.position.y - (origin_y))/RESOLUTION);
-        ROS_INFO("Motion_planner_action.cpp [%s] YOU ARE AT: %d, %d\n", s.c_str(), u, w);
+        // ROS_INFO("Motion_planner_action.cpp [%s] YOU ARE AT: %d, %d\n", m_robot_name.c_str(), u, w);
+        m_logheader.info("YOU ARE AT (world frame) x:"+to_string(kob_pose.position.x)+", y:"+to_string(kob_pose.position.y));
+        m_logheader.info("YOU ARE AT (OG frame) x:"+to_string(u)+", y:"+to_string(w));
         
         // Obtenemos la celda a la que queremos llegar. 
         int x = floor((goal.x - (origin_x))/RESOLUTION);
         int y = floor((goal.y - (origin_y))/RESOLUTION);
-        ROS_INFO("Motion_planner_action.cpp [%s] GOING TO : %d, %d\n", s.c_str(),x, y);
+        // ROS_INFO("Motion_planner_action.cpp [%s] GOING TO : %d, %d\n", m_robot_name.c_str(),x, y);
+        m_logheader.info("YOU ARE GOING TO x:"+to_string(x)+", y:"+to_string(y));
         
+        path_pub.publish(get_Astar_graph(MAP, u, w, x, y));
+
         // Obtenemos los vértices más cerecanos a ambas celdas.
         Vertice* inic = nearest_voronoi[u + w*WIDTH];
         Vertice* fin = nearest_voronoi[x + y*WIDTH];
         
         
-        ROS_INFO("motion_planner_action.cpp [%s] INIC: %d, %d\n", s.c_str(), inic->x, inic->y);
-        ROS_INFO("motion_planner_action.cpp [%s] : %2.3f, %2.3f\n", s.c_str(), getPoint(inic).x, getPoint(inic).y);
-        ROS_INFO("motion_planner_action.cpp [%s] END:  %d, %d\n", s.c_str(), fin->x, fin->y);
-        ROS_INFO("motion_planner_action.cpp [%s] : %2.3f, %2.3f\n", s.c_str(), getPoint(fin).x, getPoint(fin).y);
+        // ROS_INFO("motion_planner_action.cpp [%s] INIC: %d, %d\n", m_robot_name.c_str(), inic->x, inic->y);
+        // ROS_INFO("motion_planner_action.cpp [%s] : %2.3f, %2.3f\n", m_robot_name.c_str(), getPoint(inic).x, getPoint(inic).y);
+        // ROS_INFO("motion_planner_action.cpp [%s] END:  %d, %d\n", m_robot_name.c_str(), fin->x, fin->y);
+        // ROS_INFO("motion_planner_action.cpp [%s] : %2.3f, %2.3f\n", m_robot_name.c_str(), getPoint(fin).x, getPoint(fin).y);
         // Obtenemos la ruta en la gráfica con A*.
         std::stack<Vertice*> a = AStar(VORONOI_GRAPH, inic, fin); 
 
         a_star_route = a;
         next = getPoint(a_star_route.top());
         
-        ROS_INFO("motion_planner_action.cpp [%s] NEXT: %d, %d\n", s.c_str(), a_star_route.top()->x, a_star_route.top()->y);
+        string stmp = "NEXT: x: "+to_string(a_star_route.top()->x)+", y: "+to_string(a_star_route.top()->y);
+        m_logheader.debug(stmp);
         almost = false;
         reached_last = false;
 
@@ -574,7 +629,7 @@ public:
             if (!a_star_route.empty() && !reached_last) {
                 a_star_pub.publish(next);
             } else if (sent_goal == 0) {     
-                ROS_INFO("motion_planner_action.cpp [%s] : GOING TO FINAL GOAL",s.c_str());
+                m_logheader.debug("GOING TO FINAL GOAL!");
                 a_star_pub.publish(goal);
                 sent_goal = 1;
             } else if (begin_turn == 1 && turn == 0) {
@@ -590,7 +645,7 @@ public:
         
         if(success)
         {
-            ROS_INFO("%s: Succeeded", action_name_.c_str());
+            m_logheader.info("Succeeded!");
             // set the action state to succeeded
             as_->setSucceeded(move_base_msgs::MoveBaseResult(), "Goal reached.");
         }

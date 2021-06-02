@@ -6,6 +6,7 @@
     <arg name="x" default="0" />
     <arg name="y" default="0" />
     <arg name="robot_name" default="" />
+    <arg name="debug" default="0" />
     <arg name="with_arm" default="no" />
     <arg name="urdf_file" default="$(find xacro)/xacro '$(find hola_tortuga)/urdf/kobuki_standalone.urdf.xacro' x:=$(arg x) y:=$(arg y) tf_prefix:=$(arg robot_name)_tf with_arm:=$(arg with_arm)" />
     <param name="robot_description" command="$(arg urdf_file)" />
@@ -85,7 +86,7 @@
         <param name="robot_name" type="string" value="$(arg robot_name)"/>
         <param name="x" type="double" value="$(arg x)"/>
         <param name="y" type="double" value="$(arg y)"/>
-        <remap from="HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
+        <remap from="/dummy/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
         <remap from="campos_tortuga/a_star_goal" to="motion/a_star_goal"/>
         <remap from="campos_tortuga/odom" to="$(arg robot_name)/odom"/>
     </node>
@@ -103,8 +104,9 @@
         <param name="robot_name" type="string" value="$(arg robot_name)"/>
         <param name="x" type="double" value="$(arg x)"/>
         <param name="y" type="double" value="$(arg y)"/>
+        <param name="debug" type="int" value="$(arg debug)"/>
         <remap from="motion/odom" to="$(arg robot_name)/odom"/>
-        <remap from="/HOLA/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
+        <remap from="/dummy/mobile_base/commands/velocity" to="mobile_base/commands/velocity"/>
     </node>
 
     <!--

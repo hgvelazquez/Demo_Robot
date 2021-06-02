@@ -10,10 +10,12 @@
 #include "Grafica.h"
 #include "MapFiller.h"
 #include "Voronoi_Utils.h"
+#include "../LogHeader.h"
 
 // La gráfica de VORONOI (con aristas incluidas como vértices). 
 std::vector<int> GRAPH;
-
+static LogHeader logheader;
+static bool DEBUG = false;
 /**
  * Función auxiliar que realiza el procesamiento de la celda al momento de 
  * expandirla.
@@ -152,7 +154,13 @@ std::vector<int> voronoi(char* data, bool manhattan, int* obstacles)
 
 int main( int argc, char** argv )
 {
-    
+    logheader.m_file = "occupancy_map.cpp";
+    if(DEBUG){
+        if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+            ros::console::notifyLoggerLevelsChanged();
+        }
+    }
+
     /* Creamos los componentes de ROS. */
     ros::init(argc, argv, "basic_map");
     ros::NodeHandle n;
@@ -180,7 +188,6 @@ int main( int argc, char** argv )
     mapDimensions(map_for_vor, RESOLUTION, WIDTH, HEIGHT);
     mapOrigin(map, origin_y, origin_x, 0);
     mapOrigin(map_for_vor, origin_y, origin_x, 0);
-    ROS_INFO("occupancy_map.cpp: the value is %d",(DOOR_END - 1));
     mapOrientation(map, 0.0, 0, 0, 1);   
     mapOrientation(map_for_vor, 0.0, 0, 0, 1);
     //mapRPYOrientation(map, 0, 0, 0);   
@@ -231,10 +238,10 @@ int main( int argc, char** argv )
     addObstacleFromOriginID(data, obstacles, left_wall_id, origin_x, origin_y, 4, -.4, 7.4, -.1);
     addObstacleFromOriginID(data_for_vor, obstacles, left_wall_id, origin_x, origin_y, 4, -.4, 7.4, -.1);
 
-    addObstacleFromOriginID(data, obstacles, left_wall_id, origin_x, origin_y, 4, 0, 4, 0.9);
-    addObstacleFromOriginID(data_for_vor, obstacles, left_wall_id, origin_x, origin_y, 4, 0, 4, 0.9);
+    addObstacleFromOrigin(data, obstacles, origin_x, origin_y, 4, 0, 4, 0.9);
+    addObstacleFromOrigin(data_for_vor, obstacles, origin_x, origin_y, 4, 0, 4, 0.9);
 
-    // Pared en L inversa del lado de abajo equipo Cyan
+    // Pared en L inversa del lado de abajo equipo Magenta
     addObstacleFromOriginID(data, obstacles, up_wall_id, origin_x, origin_y, -7.4, 0.9, -7.1, 1.9);
     addObstacleFromOriginID(data_for_vor, obstacles, up_wall_id, origin_x, origin_y, -7.4, 0.9, -7.1, 1.9);
 
@@ -245,8 +252,8 @@ int main( int argc, char** argv )
     addObstacleFromOriginID(data, obstacles, left_wall_id, origin_x, origin_y, -7.4, -.4, -4.1, -.1);
     addObstacleFromOriginID(data_for_vor, obstacles, left_wall_id, origin_x, origin_y, -7.4, -.4, -4.1, -.1);
 
-    addObstacleFromOriginID(data, obstacles, left_wall_id, origin_x, origin_y, -4.1, 0, -4.1, 0.9);
-    addObstacleFromOriginID(data_for_vor, obstacles, left_wall_id, origin_x, origin_y, -4.1, 0, -4.1, 0.9);
+    addObstacleFromOrigin(data, obstacles, origin_x, origin_y, -4.1, 0, -4.1, 0.9);
+    addObstacleFromOrigin(data_for_vor, obstacles, origin_x, origin_y, -4.1, 0, -4.1, 0.9);
 
     // Pared en L inversa del lado de abajo equipo Cyan
     addObstacleFromOriginID(data, obstacles, down_wall_id, origin_x, origin_y, 7.0, 0.9, 7.3, 1.9);

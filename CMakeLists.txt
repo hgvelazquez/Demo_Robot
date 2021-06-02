@@ -93,9 +93,9 @@ include_directories(
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/hola_tortuga.cpp
-# )
+add_library(logheader
+  src/LogHeader.cpp
+)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -135,9 +135,11 @@ add_dependencies(motion_planner_action hola_tortuga_generate_messages_cpp)
 
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(map logheader)
+target_link_libraries(campos logheader)
+target_link_libraries(targets logheader)
+target_link_libraries(motion_planner logheader)
+target_link_libraries(motion_planner_action logheader)
 
 #############
 ## Install ##

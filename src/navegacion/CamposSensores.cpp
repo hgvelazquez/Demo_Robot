@@ -19,12 +19,17 @@
 
 #include "Sensor.h"
 #include "MapFiller.h"
+#include "../LogHeader.h"
 
 #define _USE_MATH_DEFINES
+
+LogHeader logheader;
+int DEBUG;
 
 geometry_msgs::Pose KOBUKI_POSITION;
 nav_msgs::OccupancyGrid MAP;
 int nav_move;
+bool goal_reached;
 geometry_msgs::Twist current_vel;
 geometry_msgs::Twist nav_vel;
 geometry_msgs::Point nav_goal;
@@ -37,7 +42,7 @@ bool turning; // Agregamos esta bandera para que gire hasta que no se oriente al
 bool changed_goal;
 const int SENSOR_NUMBER = 18; // Número de sensores que se dibujarán a la kobuki
 Sensor SENSORS[SENSOR_NUMBER]; // Arreglo con los sensores
-std::string s;
+std::string robot_name;
 double INITIAL_X;
 double INITIAL_Y;
 
@@ -77,9 +82,10 @@ void putSensors()
  */
 void nav_receiveNavGoal(const geometry_msgs::Point& goalStamped)
 {
-    changed_goal = (nav_goal.x != goalStamped.x || nav_goal.y != goalStamped.y || nav_move == 0);
+    changed_goal = (nav_goal.x != goalStamped.x || nav_goal.y != goalStamped.y || goal_reached); // nav_move == 0 || 
     nav_goal = goalStamped;      
-    nav_move = 1;
+    //nav_move = 1;
+    goal_reached = false;
 }
 
 /**
@@ -121,7 +127,8 @@ void updateSensors(const nav_msgs::Odometry::ConstPtr& msg)
     KOBUKI_POSITION = pose;
     // Si estamos lo suficientemente cerca de la meta, marcamos que ya no hay que moverse.
     if (SENSORS[0].distance(pose.position, nav_goal) < 0.1)
-        nav_move = 0;  
+        //nav_move = 0;  
+        goal_reached = true;
 }
 
 /**
@@ -131,15 +138,15 @@ void updateSensors(const nav_msgs::Odometry::ConstPtr& msg)
  */
 geometry_msgs::Twist navigate() {
     geometry_msgs::Twist nav_new;
-    geometry_msgs::Pose point = KOBUKI_POSITION;
-    tf2::Quaternion v1(point.orientation.x, point.orientation.y, point.orientation.z, point.orientation.w);
+    geometry_msgs::Pose kobuki = KOBUKI_POSITION;
+    tf2::Quaternion v1(kobuki.orientation.x, kobuki.orientation.y, kobuki.orientation.z, kobuki.orientation.w);
     geometry_msgs::Point ZERO;
     
     // Pasamos el goal al marco de la KOBUKI.
     geometry_msgs::Point nav_goal_coord;
     // Trasladamos.
-    nav_goal_coord.x = nav_goal.x -  point.position.x;
-    nav_goal_coord.y = nav_goal.y -  point.position.y;
+    nav_goal_coord.x = nav_goal.x -  kobuki.position.x;
+    nav_goal_coord.y = nav_goal.y -  kobuki.position.y;
     // Rotamos.
     tf2::Quaternion g(nav_goal_coord.x, nav_goal_coord.y, 0, 0);
     g = inverse(v1)*g*v1;
@@ -163,7 +170,7 @@ geometry_msgs::Twist navigate() {
         }
     }
     
-    if (nav_move == 1) {
+    if (!goal_reached) { //nav_move == 1 || 
         float min = 1;
         int min_sensor = -1;
         float nav_d0 = 0.9;
@@ -179,11 +186,14 @@ geometry_msgs::Twist navigate() {
             end.y = SENSORS[i].distance_detected*sin(angle);
             // Frontera a partir de la cual contamos las colisiones.
             // Será el punto puesto en la orilla de la KOBUKI. (rcost, rsent)
+
+            // El valor de Resolution puede ser cambiado por el radio de la
+            // kobuiki
             actual.x = RESOLUTION*cos(SENSORS[i].angle); 
             actual.y = RESOLUTION*sin(SENSORS[i].angle);
           
-            // Posible error por el 0.2 en lugar de resolution
-            // aunque no sé a que se deba ese valor
+            // El valor 0.2 es por el radio de la kobuki, desconozco
+            // si ese es el radio exacto
             float nav_d = SENSORS[i].distance_detected - 0.2; // Movemos los sensores a la orilla de la KOBUKI.
             if (nav_d < min && SENSORS[i].front) {
                 min = nav_d;
@@ -291,7 +301,7 @@ visualization_msgs::Marker drawSpeed(geometry_msgs::Twist vel)
     visualization_msgs::Marker nav_sensor;
     //General data of the Vector
     nav_sensor.id = 100; // Más que cualquier número de sensores.
-    nav_sensor.header.frame_id = (s+"_tf/base_footprint").c_str();
+    nav_sensor.header.frame_id = (robot_name+"_tf/base_footprint").c_str();
     nav_sensor.header.stamp = ros::Time::now();   // No caduca
     nav_sensor.ns = "vel";
     nav_sensor.type = visualization_msgs::Marker::ARROW;
@@ -334,13 +344,11 @@ visualization_msgs::MarkerArray drawSensors()
         visualization_msgs::Marker current_sensor;
 
         //General data of the Line
-        if (s == ""){
+        if (robot_name == ""){
             current_sensor.header.frame_id = "/base_footprint"; // En coordenadas de la KOBUKI.
-            //ROS_ERROR("CamposSensores.cpp: current sensor : /base_link");
         }else
         {
-            current_sensor.header.frame_id = s+"_tf/base_footprint"; // En coordenadas de la KOBUKI.
-            //ROS_ERROR("CamposSensores.cpp: current sensor : %s", ("/"+s+"_tf/base_link").c_str());   
+            current_sensor.header.frame_id = robot_name+"_tf/base_footprint"; // En coordenadas de la KOBUKI.
         }
         
         current_sensor.id = i;
@@ -380,68 +388,70 @@ visualization_msgs::MarkerArray drawSensors()
     return sensors;
 }  
 
+void readParams(ros::NodeHandle& nh_){
+    robot_name = "";
+    INITIAL_X = 0;
+    INITIAL_Y = 0;
+    DEBUG = 0;
+    if (!nh_.hasParam("robot_name"))
+        logheader.error("No param named 'robot_name'");
+
+    if (nh_.getParam("robot_name", robot_name)){
+        logheader.info("Got param: "+robot_name);
+        logheader.m_robot_id = robot_name;
+    }
+    else {
+        logheader.error("Failed to get param 'robot_name'");
+    }
+
+    if (nh_.getParam("x", INITIAL_X))
+        logheader.info("Got param "+to_string(INITIAL_X));
+    else
+        logheader.error("Failed to get param 'x'");
+
+    if (nh_.getParam("y", INITIAL_Y))
+        logheader.info("Got param "+to_string(INITIAL_Y));
+    else
+        logheader.error("Failed to get param 'y'");
+
+    if (nh_.getParam("debug", DEBUG))
+        logheader.info("Got param %d"+to_string(DEBUG));
+        if(DEBUG){
+            if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) {
+                ros::console::notifyLoggerLevelsChanged();
+            }
+        }
+    else
+        logheader.error("Failed to get param 'debug'");
+}
+
 // Función main
 int main (int argc, char** argv)
 {
+    logheader.m_file = "CamposSensores.cpp";
+    
     // Iniciamos los componentes de ROS  
     ros::init(argc, argv, "collisions");
     ros::NodeHandle n("~");
     ros::Rate r(20);
     
-    if (!n.hasParam("robot_name"))
-    {
-        ROS_ERROR("CamposSensores.cpp: No param named 'robot_name'");
-        s = "";
-        INITIAL_X = 0;
-        INITIAL_Y = 0;
-    }
-
-    if (n.getParam("robot_name", s))
-    {
-      ROS_ERROR("CamposSensores.cpp: Got param %s", s.c_str());
-    }
-    else
-    {
-      ROS_ERROR("CamposSensores.cpp: Failed to get param 'robot_name'");
-      s = "";
-    }
-
-    if (n.getParam("x", INITIAL_X))
-    {
-      ROS_ERROR("CamposSensores.cpp: Got param %lf", INITIAL_X);
-    }
-    else
-    {
-      ROS_ERROR("CamposSensores.cpp: Failed to get param 'x'");
-      INITIAL_X = 0;
-    }
-
-    if (n.getParam("y", INITIAL_Y))
-    {
-      ROS_ERROR("CamposSensores.cpp: Got param %lf", INITIAL_Y);
-    }
-    else
-    {
-      ROS_ERROR("CamposSensores.cpp: Failed to get param 'y'");
-      INITIAL_Y = 0;
-    }
-
-
+    readParams(n);
   
     // Los tópicos donde publicaremos.
     ros::Publisher sensor_marker = n.advertise<visualization_msgs::MarkerArray>("sensor_markers", 10);
     ros::Publisher vector_marker = n.advertise<visualization_msgs::Marker>("vector_marker", 10);
-    ros::Publisher nav_velocity_pub = n.advertise<geometry_msgs::Twist>("/HOLA/mobile_base/commands/velocity", 1);
+    ros::Publisher nav_velocity_pub = n.advertise<geometry_msgs::Twist>("/dummy/mobile_base/commands/velocity", 1);
     
     ros::Subscriber sub_odom = n.subscribe("odom", 5, updateSensors);// ("odom").c_str()
-    ROS_ERROR("CamposSensores.cpp: suscribed to: %s", ("/"+s+"/odom").c_str()); 
+    logheader.info("CamposSensores.cpp: suscribed to: /"+robot_name+"/odom"); 
     
     ros::Subscriber sub_map = n.subscribe("/occupancy_map", 5, getMapParams);
     ros::Subscriber nav_sub = n.subscribe("a_star_goal", 1, nav_receiveNavGoal);
 
     // Estado inicial de las variables.
     have_map = false;
-    nav_move = 0;
+    //nav_move = 0;
+    goal_reached = true;
     putSensors();
   
     // Escuchamos hasta obtener el mapa, y luego nos desubscribimos.

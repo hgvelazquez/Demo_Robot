@@ -24,6 +24,7 @@
 #include "Grafica.h"
 #include "MapFiller.h"
 #include "Voronoi_Utils.h"
+#include "../LogHeader.h"
 
 #include <hola_tortuga/Finished.h>
 

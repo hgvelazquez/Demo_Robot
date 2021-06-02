@@ -27,6 +27,7 @@
             <arg name="y" default=".5" />
             <arg name="with_arm" default="yes" />
             <arg name="robot_name" default="robot_3" />
+            <arg name="debug" default="0" />
         </include>
     </group>
 

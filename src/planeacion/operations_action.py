@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import sys
 import rospy
@@ -8,10 +8,14 @@ from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from std_srvs.srv import SetBool
 from geometry_msgs.msg import PoseStamped
 from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Quaternion
 from visualization_msgs.msg import MarkerArray
 from std_msgs.msg import Float64MultiArray
 from hola_tortuga.msg import Finished
 from rospy import ROSException
+from scipy.spatial.transform import Rotation
+from tf.transformations import *
+
 
 def active_cb():
     rospy.loginfo("Goal pose being processed")
@@ -39,13 +43,28 @@ if __name__ == "__main__":
     goal.target_pose.header.frame_id = "map"
     goal.target_pose.header.stamp = rospy.Time.now()
 
-    goal.target_pose.pose.position.x = -5.0
-    goal.target_pose.pose.position.y = 7.0
+    goal.target_pose.pose.position.x = 1.0
+    goal.target_pose.pose.position.y = 1.0
     goal.target_pose.pose.position.z = 0.0
     goal.target_pose.pose.orientation.x = 0.0
     goal.target_pose.pose.orientation.y = 0.0
     goal.target_pose.pose.orientation.z = 0.662
     goal.target_pose.pose.orientation.w = 0.750
+    
+
+    # Create a rotation object from Euler angles specifying axes of rotation
+    rot = Rotation.from_euler('xyz', [90, 45, 30], degrees=True)
+
+    # Convert to quaternions and print
+    rot_quat = rot.as_quat()
+    # print(rot_quat)
+    q = Quaternion(1,1,0,0)
+
+    euler = euler_from_quaternion([0,1,1,0])
+    print("row: ",euler[0])
+    print("pitch: ",euler[1])
+    print("yaw: ",euler[2])
+
 
     navclient.send_goal(goal, done_cb, active_cb, feedback_cb)
     finished = navclient.wait_for_result()

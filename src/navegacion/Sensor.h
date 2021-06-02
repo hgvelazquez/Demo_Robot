@@ -24,7 +24,10 @@ class Sensor {
     float distance_detected;
     // Se considera colición a un objeto a una distancia menor a un metro
     bool collision;                          
+    // Angulo en el cual se encuentra el sensor con respecto a la kobuki
+    // por lo mismo que es sobre la kobuki nunca cambia.
     tf2::Quaternion angle_vector;
+    // Angulo en el cual se encuentra el sensor con respecto al mundo
     tf2::Quaternion absolute_angle;
     float angle;
     // Indica si el sensor es de los sensores frontales [45°,-45°]
