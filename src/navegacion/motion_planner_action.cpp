@@ -633,7 +633,8 @@ public:
                 a_star_pub.publish(goal);
                 sent_goal = 1;
             } else if (begin_turn == 1 && turn == 0) {
-                rotate_pub.publish(rotate());
+                //    rotate_pub.publish(rotate());
+                turn = 1;
             } else if (turn == 1){
                 // Ya hicimos todo lo que teníamos que hacer. 
                 success = true;
