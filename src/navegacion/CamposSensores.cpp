@@ -23,8 +23,9 @@
 
 #define _USE_MATH_DEFINES
 
-LogHeader logheader;
-int DEBUG;
+
+LogHeader logheader; // Clase custom para facilitar el debugging
+int DEBUG;           // Indica si debemos desplegar mensajes de debug o no
 
 geometry_msgs::Pose KOBUKI_POSITION;
 nav_msgs::OccupancyGrid MAP;
@@ -142,20 +143,28 @@ geometry_msgs::Twist navigate() {
     tf2::Quaternion v1(kobuki.orientation.x, kobuki.orientation.y, kobuki.orientation.z, kobuki.orientation.w);
     geometry_msgs::Point ZERO;
     
+    logheader.debug("Got param "+to_string(INITIAL_X));  
+
     // Pasamos el goal al marco de la KOBUKI.
     geometry_msgs::Point nav_goal_coord;
-    // Trasladamos.
+    // Trasladamos, para obtener las coordenadas como si el origen
+    // estuviera en la posición de la kobuki.
     nav_goal_coord.x = nav_goal.x -  kobuki.position.x;
     nav_goal_coord.y = nav_goal.y -  kobuki.position.y;
-    // Rotamos.
+    // Volvemos el vector en quaternion para poderlo rotar
+    // como si el origen del angulo estubiera alineado
+    // con la dirección en la que ve la kobuki.
     tf2::Quaternion g(nav_goal_coord.x, nav_goal_coord.y, 0, 0);
     g = inverse(v1)*g*v1;
     nav_goal_coord.x = g.x();
     nav_goal_coord.y = g.y();
     
+    // si giras avisas que seguiras girando y terminas
+    // si no giras avisas que ya no girarás y sigues
     if (turning == true && !changed_goal) {
         tf2::Vector3 v1(nav_goal_coord.x, nav_goal_coord.y, 0);
         tf2::Vector3 v2(1, 0, 0);
+        // calcula angulo del origen a la direccion del objetivo.
         float a = v2.angle(v1);
         if (a > M_PI/20) {
             float factor = (a < M_PI/3) ? 1.5 : 1; 
@@ -170,7 +179,11 @@ geometry_msgs::Twist navigate() {
         }
     }
     
-    if (!goal_reached) { //nav_move == 1 || 
+
+    if (!goal_reached) {
+        // guardaremos el id y la distancia,
+        // del sensor de distancia minima a algún obstaculo
+        // solo si es un sensor frontal
         float min = 1;
         int min_sensor = -1;
         float nav_d0 = 0.9;
@@ -187,14 +200,15 @@ geometry_msgs::Twist navigate() {
             // Frontera a partir de la cual contamos las colisiones.
             // Será el punto puesto en la orilla de la KOBUKI. (rcost, rsent)
 
-            // El valor de Resolution puede ser cambiado por el radio de la
-            // kobuiki
-            actual.x = RESOLUTION*cos(SENSORS[i].angle); 
-            actual.y = RESOLUTION*sin(SENSORS[i].angle);
+            // El valor de 0.2 se supone es el valor del radio de la kobuki
+            actual.x = 0.2*cos(SENSORS[i].angle); 
+            actual.y = 0.2*sin(SENSORS[i].angle);
           
             // El valor 0.2 es por el radio de la kobuki, desconozco
-            // si ese es el radio exacto
-            float nav_d = SENSORS[i].distance_detected - 0.2; // Movemos los sensores a la orilla de la KOBUKI.
+            // si ese es el radio exacto.
+            // calculamos la distancia del limite de la kobuki a la colisión
+            float nav_d = SENSORS[i].distance_detected - 0.2; 
+            // guardamos al menor solo si es de los frontales
             if (nav_d < min && SENSORS[i].front) {
                 min = nav_d;
                 min_sensor = i;
@@ -230,7 +244,7 @@ geometry_msgs::Twist navigate() {
             float norm = sqrt(nav_new.linear.x*nav_new.linear.x + nav_new.angular.z*nav_new.angular.z);
             nav_vel.linear.x = nav_new.linear.x/norm;
             nav_vel.angular.z = nav_new.angular.z/norm;
-            return nav_vel;
+            return nav_vel; // creo que está de más
         }else {  
             nav_new.linear.x -= 2*XI*deltax;
             nav_new.angular.z -= 2*XI*deltay;
@@ -467,7 +481,10 @@ int main (int argc, char** argv)
     {
         ros::spinOnce();
         sensor_marker.publish(drawSensors());
-        nav_velocity_pub.publish(navigate());
+        geometry_msgs::Twist nav_msg = navigate();
+        //logheader.debug("Got param "+nav_msg);  
+        nav_velocity_pub.publish(nav_msg);
+
         vector_marker.publish(drawSpeed(current_vel));
         r.sleep();
     }
